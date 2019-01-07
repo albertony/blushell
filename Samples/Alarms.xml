@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<alarms>
+<alarm hour="8" source="Current play queue or station" enable="1" volume="25" duration="15" fadein="0" days="1010000" image="img/cover.png" minute="0" url="undefined" id="1"/>
+</alarms>

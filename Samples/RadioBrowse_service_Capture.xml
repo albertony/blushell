@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<radiotime service="Capture">
+<item URL="RadioParadise%3Ahttp%3A%2F%2Fstream-tx3.radioparadise.com%2Faac-320" image="/Sources/images/ParadiseRadioIcon.png" serviceType="CloudService" playerName="Stua" text="Radio Paradise" type="audio" id="RadioParadise"/>
+<item URL="Capture%3Abluez%3Abluetooth" image="/images/BluetoothIcon.png" playerName="Stua" text="Bluetooth" inputType="bluetooth" id="input2" type="audio"/>
+</radiotime>

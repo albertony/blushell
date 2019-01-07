@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<genres service="Tidal" length="23">
+<genre image="/Artwork?service=Tidal&amp;genresimage=04b1baf5-25ea-4d1b-8ec2-082e3e308f60" genreid="Local">Norsk</genre>
+<genre image="/Artwork?service=Tidal&amp;genresimage=0239132d-99be-41f4-929d-e27280f7bff1" genreid="Pop">Pop</genre>
+<genre image="/Artwork?service=Tidal&amp;genresimage=674f6c6c-24db-4baf-8cc9-abcda685f2a3" genreid="Rock">Rock</genre>
+<genre image="/Artwork?service=Tidal&amp;genresimage=8d0b5ebb-cf25-471d-aabb-347f3920f290" genreid="Indie">Indie</genre>
+<genre image="/Artwork?service=Tidal&amp;genresimage=658519e4-8aea-41a8-86f9-e3fbfb31a630" genreid="Hiphop">Hip Hop / Rap</genre>
+<genre image="/Artwork?service=Tidal&amp;genresimage=b100bf56-2285-48ad-a608-386a7254fe8c" genreid="Funk">R&amp;B / Soul</genre>
+<genre image="/Artwork?service=Tidal&amp;genresimage=d251e1ed-fef2-45a9-98d9-e8d5745f9bdd" genreid="Metal">Metal</genre>
+<genre image="/Artwork?service=Tidal&amp;genresimage=abc8250d-3fbe-4acc-a69d-29fcd0eb46be" genreid="Country">Country</genre>
+<genre image="/Artwork?service=Tidal&amp;genresimage=7f53e08b-9e07-4813-99cb-237388122847" genreid="Americana">Folk / Americana</genre>
+<genre image="/Artwork?service=Tidal&amp;genresimage=a20b6923-0b2c-4651-b9ef-f88372355a74" genreid="Blues">Blues</genre>
+<genre image="/Artwork?service=Tidal&amp;genresimage=04fb4597-c712-49ad-9b71-a5aefbe1d894" genreid="Jazz">Jazz</genre>
+<genre image="/Artwork?service=Tidal&amp;genresimage=aad3c1fd-655a-43fa-8c9d-aab439340395" genreid="Classical">Classical</genre>
+<genre image="/Artwork?service=Tidal&amp;genresimage=e388fbee-3506-4000-ac4c-c4853f857d0a" genreid="Electronic">Electronic</genre>
+<genre image="/Artwork?service=Tidal&amp;genresimage=05fd0839-86f1-4517-a211-b9c20f17bfa2" genreid="Dance">Dance</genre>
+<genre image="/Artwork?service=Tidal&amp;genresimage=8ee3c6ed-7342-430d-8e5d-20dc72d6ac77" genreid="Kids">Barnemusikk</genre>
+<genre image="/Artwork?service=Tidal&amp;genresimage=8173edc1-ca03-4f22-8706-c8800848d331" genreid="Retro">Retro</genre>
+<genre image="/Artwork?service=Tidal&amp;genresimage=607c799f-df30-474b-b8ae-228c9d4031d5" genreid="Svensk">Svensk</genre>
+<genre image="/Artwork?service=Tidal&amp;genresimage=ddb3306e-c787-4468-a791-8efbe746aa8a" genreid="Latin">Latin</genre>
+<genre image="/Artwork?service=Tidal&amp;genresimage=74bf07b3-eebf-487b-8704-d082973cc655" genreid="Reggae">Reggae / Dancehall</genre>
+<genre image="/Artwork?service=Tidal&amp;genresimage=b0208879-eb06-4669-a5fb-cf1009b46a11" genreid="World">World Music</genre>
+<genre image="/Artwork?service=Tidal&amp;genresimage=d73a5448-0a5e-4606-9f3e-113d93eaaf05" genreid="Film">Soundtracks</genre>
+<genre image="/Artwork?service=Tidal&amp;genresimage=7cf188f8-93df-4119-b624-47dfb4d70e51" genreid="Comedy">Comedy</genre>
+<genre image="/Artwork?service=Tidal&amp;genresimage=3cce1ba2-2530-4384-8c51-dfdf81868a9d" genreid="Gospel">Gospel / Christian</genre>
+</genres>

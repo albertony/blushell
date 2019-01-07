@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<presets prid="0">
+<preset name="Dad" image="/Artwork?service=Tidal&amp;playlistimage=f4657777-8531-4a73-9ea8-e3444d75591d" url="/Load?service=Tidal&amp;id=3fe80da2-af2b-4df5-b28a-1a85b1819c1d" id="1"/>
+<preset name="Mom" image="/Artwork?service=Tidal&amp;playlistimage=96bfa574-7da7-4ce1-9653-3bdb2ec1d8d5" url="/Load?service=Tidal&amp;id=2d4530e4-f605-45c5-a1c1-998eb3ffc9a1" id="2"/>
+<preset name="NRK P3 (Oslo)" image="http://cdn-radiotime-logos.tunein.com/s26044q.png" url="TuneIn:s26044/http://opml.radiotime.com/Tune.ashx?id=s26044&amp;formats=wma,mp3,aac,ogg,hls&amp;partnerId=15auFo3a&amp;serial=D4:26:EE:88:8A:28" id="3"/>
+<preset name="NRK MP3 (Oslo)" image="http://cdn-radiotime-logos.tunein.com/s25537q.png" url="TuneIn:s25537/http://opml.radiotime.com/Tune.ashx?id=s25537&amp;formats=wma,mp3,aac,ogg,hls&amp;partnerId=15auFo3a&amp;serial=D4:26:EE:88:8A:28" id="4"/>
+<preset name="NRK Super (Oslo)" image="http://cdn-radiotime-logos.tunein.com/s55302q.png" url="TuneIn:s55302/http://opml.radiotime.com/Tune.ashx?id=s55302&amp;formats=wma,mp3,aac,ogg,hls&amp;partnerId=15auFo3a&amp;serial=D4:26:EE:88:8A:28" id="5"/>
+<preset name="93.0 | NRK Alltid Nyheter (Community News)" image="http://cdn-radiotime-logos.tunein.com/s25534q.png" url="TuneIn:s25534/http://opml.radiotime.com/Tune.ashx?id=s25534&amp;formats=wma,mp3,aac,ogg,hls&amp;partnerId=15auFo3a&amp;serial=D4:26:EE:88:8A:28" id="7"/>
+</presets>

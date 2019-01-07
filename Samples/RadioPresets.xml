@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<radiotime service="TuneIn">
+<category text="URLs (1)">
+<item guide_id="u7" item="url" is_preset="true" text="Test" URL="TuneIn%3Au7%2Fhttps%3A%2F%2Ffeed.pippa.io%2Fpublic%2Fstreams%2F5b56f447cf233a4227c24599%2Fepisodes%2F5c2ed0fe10599a96235c5766.mp3" image="http://cdn-radiotime-logos.tunein.com/s0q.png" preset_id="u7" type="audio"/>
+</category>
+<category text="Stations (6)">
+<item guide_id="s47450" item="station" subtext="Norwegian" text="92.4 | NRK P1 Trøndelag (News)" is_preset="true" URL="TuneIn%3As47450%2Fhttp%3A%2F%2Fopml.radiotime.com%2FTune.ashx%3Fid%3Ds47450%26formats%3Dwma%2Cmp3%2Caac%2Cogg%2Chls%26partnerId%3D15auFo3a%26serial%3DD4%3A26%3AEE%3A88%3A8A%3A28" image="http://cdn-radiotime-logos.tunein.com/s47450q.png" preset_id="s47450" type="audio"/>
+<item guide_id="s15260" item="station" subtext="Mytekalender" text="100.0 | NRK P2 (Community News)" is_preset="true" URL="TuneIn%3As15260%2Fhttp%3A%2F%2Fopml.radiotime.com%2FTune.ashx%3Fid%3Ds15260%26formats%3Dwma%2Cmp3%2Caac%2Cogg%2Chls%26partnerId%3D15auFo3a%26serial%3DD4%3A26%3AEE%3A88%3A8A%3A28" preset_id="s15260" image="http://cdn-radiotime-logos.tunein.com/s15260q.png" current_track="Mytekalender" type="audio"/>
+<item guide_id="s26044" item="station" subtext="Harald Are Lund" text="93.5 | NRK P3 (Hip Hop Music)" is_preset="true" URL="TuneIn%3As26044%2Fhttp%3A%2F%2Fopml.radiotime.com%2FTune.ashx%3Fid%3Ds26044%26formats%3Dwma%2Cmp3%2Caac%2Cogg%2Chls%26partnerId%3D15auFo3a%26serial%3DD4%3A26%3AEE%3A88%3A8A%3A28" preset_id="s26044" image="http://cdn-radiotime-logos.tunein.com/s26044q.png" current_track="Harald Are Lund" type="audio"/>
+<item guide_id="s215195" item="station" subtext="Norwegian" text="NRK P13 (World Music)" is_preset="true" URL="TuneIn%3As215195%2Fhttp%3A%2F%2Fopml.radiotime.com%2FTune.ashx%3Fid%3Ds215195%26formats%3Dwma%2Cmp3%2Caac%2Cogg%2Chls%26partnerId%3D15auFo3a%26serial%3DD4%3A26%3AEE%3A88%3A8A%3A28" image="http://cdn-radiotime-logos.tunein.com/s215195q.png" preset_id="s215195" type="audio"/>
+<item guide_id="s25537" item="station" subtext="Norwegian" text="97.0 | NRK MP3 (Top 40 &amp; Pop Music)" is_preset="true" URL="TuneIn%3As25537%2Fhttp%3A%2F%2Fopml.radiotime.com%2FTune.ashx%3Fid%3Ds25537%26formats%3Dwma%2Cmp3%2Caac%2Cogg%2Chls%26partnerId%3D15auFo3a%26serial%3DD4%3A26%3AEE%3A88%3A8A%3A28" image="http://cdn-radiotime-logos.tunein.com/s25537q.png" preset_id="s25537" type="audio"/>
+<item guide_id="s25534" item="station" subtext="Hardtalk" text="93.0 | NRK Alltid Nyheter (Community News)" is_preset="true" URL="TuneIn%3As25534%2Fhttp%3A%2F%2Fopml.radiotime.com%2FTune.ashx%3Fid%3Ds25534%26formats%3Dwma%2Cmp3%2Caac%2Cogg%2Chls%26partnerId%3D15auFo3a%26serial%3DD4%3A26%3AEE%3A88%3A8A%3A28" preset_id="s25534" image="http://cdn-radiotime-logos.tunein.com/s25534q.png" current_track="Hardtalk" type="audio"/>
+</category>
+</radiotime>

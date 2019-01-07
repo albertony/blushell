@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<radiotime service="TuneIn">
+<item URL="http%3A%2F%2Fopml.radiotime.com%2FBrowse.ashx%3FpartnerId%3D15auFo3a%26serial%3DD4%3A26%3AEE%3A88%3A8A%3A28%26formats%3Dwma%2Cmp3%2Caac%2Cogg%2Chls%26c%3Dpresets" key="presets" text="Favorites" type="link"/>
+<item URL="http%3A%2F%2Fopml.radiotime.com%2FBrowse.ashx%3Fc%3Dlocal%26formats%3Dwma%2Cmp3%2Caac%2Cogg%2Chls%26partnerId%3D15auFo3a%26serial%3DD4%3A26%3AEE%3A88%3A8A%3A28" key="local" text="Local Radio" type="link"/>
+<item URL="http%3A%2F%2Fopml.radiotime.com%2FBrowse.ashx%3Fc%3Dmusic%26formats%3Dwma%2Cmp3%2Caac%2Cogg%2Chls%26partnerId%3D15auFo3a%26serial%3DD4%3A26%3AEE%3A88%3A8A%3A28" key="music" text="Music" type="link"/>
+<item URL="http%3A%2F%2Fopml.radiotime.com%2FBrowse.ashx%3Fc%3Dtalk%26formats%3Dwma%2Cmp3%2Caac%2Cogg%2Chls%26partnerId%3D15auFo3a%26serial%3DD4%3A26%3AEE%3A88%3A8A%3A28" key="talk" text="Talk" type="link"/>
+<item URL="http%3A%2F%2Fopml.radiotime.com%2FBrowse.ashx%3Fc%3Dsports%26formats%3Dwma%2Cmp3%2Caac%2Cogg%2Chls%26partnerId%3D15auFo3a%26serial%3DD4%3A26%3AEE%3A88%3A8A%3A28" key="sports" text="Sports" type="link"/>
+<item URL="http%3A%2F%2Fopml.radiotime.com%2FBrowse.ashx%3Fid%3Dr0%26formats%3Dwma%2Cmp3%2Caac%2Cogg%2Chls%26partnerId%3D15auFo3a%26serial%3DD4%3A26%3AEE%3A88%3A8A%3A28" key="location" text="By Location" type="link"/>
+<item URL="http%3A%2F%2Fopml.radiotime.com%2FBrowse.ashx%3Fc%3Dlang%26formats%3Dwma%2Cmp3%2Caac%2Cogg%2Chls%26partnerId%3D15auFo3a%26serial%3DD4%3A26%3AEE%3A88%3A8A%3A28" key="language" text="By Language" type="link"/>
+<item URL="http%3A%2F%2Fopml.radiotime.com%2FBrowse.ashx%3Fc%3Dpodcast%26formats%3Dwma%2Cmp3%2Caac%2Cogg%2Chls%26partnerId%3D15auFo3a%26serial%3DD4%3A26%3AEE%3A88%3A8A%3A28" key="podcast" text="Podcasts" type="link"/>
+</radiotime>

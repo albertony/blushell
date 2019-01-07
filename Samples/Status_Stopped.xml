@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<status etag="67ab257fcd344a89ca137fd6caac2bd0">
+<album>Darkness On the Edge of Town</album>
+<artist>Bruce Springsteen</artist>
+<canMovePlayback>true</canMovePlayback>
+<cursor>29</cursor>
+<fn>Tidal:4918331</fn>
+<image>/Artwork?service=Tidal&amp;songid=Tidal%3A4918331</image>
+<indexing>0</indexing>
+<mid>3</mid>
+<mode>1</mode>
+<name>Badlands</name>
+<pid>43</pid>
+<prid>0</prid>
+<repeat>0</repeat>
+<service>Tidal</service>
+<serviceIcon>/Sources/images/TidalIcon.png</serviceIcon>
+<shuffle>0</shuffle>
+<sid>4</sid>
+<sleep></sleep>
+<song>0</song>
+<state>stop</state>
+<syncStat>3</syncStat>
+<title1>Badlands</title1>
+<title2>Bruce Springsteen</title2>
+<title3>Darkness On the Edge of Town</title3>
+<totlen>242</totlen>
+<volume>2</volume>
+<secs>0</secs>
+</status>

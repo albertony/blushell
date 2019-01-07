@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<audiomode volMaxLimit="0" channelMode="default" volMax="0" volMin="-90" volRamp="log" volRampDefault="log" mqaDisable="0" crossover="" canFixVolume="false" volume="variable" replayGainMode="none" bluetoothAutoplay="1" captureLatency="0" volMaxDefault="0" volMinDefault="-90" captureAutoplay="0" volMinLimit="-90"/>

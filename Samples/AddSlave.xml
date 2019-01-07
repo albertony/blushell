@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addSlave>
+<slave port="11000" id="10.0.0.6"/>
+</addSlave>
