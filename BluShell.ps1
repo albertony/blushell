@@ -363,9 +363,26 @@ function Blu-PlayerGroupAdd()
 		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
 		[string] $Device,
 		[string] $GroupName,
-		[string] $SlaveIP
+		[string] $SlaveIP,
+		[ValidateSet('MultiPlayer', 'StereoPair', 'HomeTheater')] [string] $GroupType,
+		[string] $SlaveType = 'right'
 	)
-	(Blu-Invoke $Device "AddSlave" @{'slave' = $SlaveIP; 'group' = $GroupName }).addSlave.slave
+	$Options = @{'slave' = $SlaveIP; 'group' = $GroupName }
+	if ($GroupType -eq 'StereoPair') {
+		if ($SlaveType -eq 'right') {
+			$Options['channelMode'] = 'left'
+			$Options['slaveChannelMode'] = 'right'
+		} elseif ($SlaveType -eq 'left') {
+			$Options['channelMode'] = 'right'
+			$Options['slaveChannelMode'] = 'left'
+		} else {
+			throw "SlaveType in StereoPair must be either 'left' or 'right'"
+		}
+		(Blu-Invoke $Device "AddSlave" $Options).addSlave.slave
+	} elseif ($GroupType -eq 'HomeTheater') {
+		throw "HomeTheater groups not supported yet"
+	}
+	(Blu-Invoke $Device "AddSlave" $Options).addSlave.slave
 }
 function Blu-PlayerGroupRemove()
 {
@@ -548,7 +565,7 @@ function Blu-SwitchSource()
 		[string] $Device,
 		
 		[Parameter(Mandatory=$True)]
-		[ValidateSet('Optical', 'Bluetooth', 'Spotify', 'RadioParadise')] $Source
+		[ValidateSet('Optical', 'Bluetooth', 'Spotify', 'RadioParadise')] [string] $Source
 	)
 	$ServicePath = ""
 	$Image = ""
@@ -666,7 +683,7 @@ function Blu-BluetoothSetting()
 		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
 		[string] $Device,
 		
-		[ValidateSet('manual', 'automatic', 'guest', 'off')] $Mode
+		[ValidateSet('manual', 'automatic', 'guest', 'off')] [string] $Mode
 	)
 	# Argument Mode is optional, default is to return current state.
 	$Modes = (Get-Variable "Mode").Attributes.ValidValues
