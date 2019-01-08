@@ -8,6 +8,10 @@ BluOS is an advanced operating system and music management software (https://nad
 
 ![BluOS logo](https://support.bluos.net/system/photos/0014/1012/9227/BLS.png)
 
+Note that several of the services integrated into BluOS, such as Tidal, have their
+own APIs that can be used directly instead of (or in addition to) via the integrated
+API in BluOS. For Tidal, se [tidalshell](https://github.com/albertony/tidalshell) - my PowerShell wrapper for the Tidal API.
+
 # BluOS API
 
 The BluOS devices serve a REST API on port number 11000. Most operations can be performed
@@ -18,10 +22,6 @@ HTTP requests to this service instead of the REST service.
 
 When describing the details below, all operations are HTTP Get requests against the
 REST API unless specifically stated otherwise.
-
-Note that several of the services integrated into BluOS, such as Tidal, have their
-own APIs that can be used directly instead of (or in addition to) via the integrated
-API in BluOS.
 
 ## Playback
 
@@ -362,24 +362,25 @@ Sample [response](Samples/Artwork.xml).
 Gives the current status of the player. This is called frequently by the offical
 applications to keep it up to date with any changes from other controllers.
 
-Optional parameters include 'timeout', which can be set to an integer value
-which probably defines number of seconds, and 'etag' which is an
-[HTTP entity tag](https://en.wikipedia.org/wiki/HTTP_ETag), used as
-a mechanism for synchronization handling:
+Two optional parameters, 'timeout', which can be set to an integer value
+which probably defines number of seconds, and 'etag', which is probably an
+[HTTP entity tag](https://en.wikipedia.org/wiki/HTTP_ETag), seem to be
+used for keeping the client state current (e.g. show correct currently
+playing song as the playback progresses through the play queue), and for
+synchronization between multiple controllers (e.g. show correct volume
+level after another controller changes it). The /SyncStatus request is
+probably also as part of this. The official desktop client application
+send these requests regularly (every few second).
 
-> This allows caches to be more efficient, and saves bandwidth, as a web server
-> does not need to send a full response if the content has not changed. ETags can
-> also be used for optimistic concurrency control, as a way to help prevent
-> simultaneous updates of a resource from overwriting each other.
+TODO: I am not sure how this mechanism work. The official destkop client
+does not send "If-None-Match" headers, which is normally used in Etag
+concurrency control (Tidal does, it is implemented in [tidalshell](https://github.com/albertony/tidalshell)).
 
-See also /SyncStatus.
 
 Sample [response](Samples/Status.xml),
 [response when stopped](Samples/Status_Stopped.xml),
 [response when paused](Samples/Status_Paused.xml),
 [response when playing](Samples/Status_Playing.xml).
-
-TODO: Have not yet dug into exactly how the synchronization mechanism works..
 
 ### /SyncStatus
 
