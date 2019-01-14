@@ -35,7 +35,7 @@ Optional parameter 'seek' can be set to a integer representing number of seconds
 
 Optional parameter 'url' can be set directly to a stream url to play. This can
 be any streamable media url, such as an mp3 file, or it can be an "internal"
-url identifier used in BluOS, e.g. "Capture:bluez:bluetooth" or "Tidal:radio:track/43781115" (the latter from the trackstationid attribute
+url identifier used in BluOS, e.g. `Capture:bluez:bluetooth` or `Tidal​:radio:track/43781115` (the latter from the trackstationid attribute
 of /Songs response from Tidal service).
 
 The [response](Samples/Play.xml) indicates the resulting state, which is also reported by /Status. On success the state should be 'play'.
@@ -292,14 +292,14 @@ TODO...
 
 Sample [default response](Samples/RadioBrowse.xml),
 [service=Capture response ](Samples/RadioBrowse_service_Capture.xml),
-[service=TuneIn response](Samples/RadioBrowse_service_Capture.xml).
+[service=TuneIn response](Samples/RadioBrowse_service_TuneIn.xml).
 
 TODO...
 
 ### /RadioPresets
 
 Sample [default response](Samples/RadioPresets.xml),
-[service=Capture response](Samples/RadioPresets_TuneIn.xml).
+[service=TuneIn](Samples/RadioPresets_TuneIn.xml).
 
 TODO...
 
