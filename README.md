@@ -6,11 +6,15 @@ Bluesound is an award-winning wireless hi-res sound system (https://www.bluesoun
 
 BluOS is an advanced operating system and music management software (https://nadelectronics.com/bluos/).
 
-![BluOS logo](https://support.bluos.net/system/photos/0014/1012/9227/BLS.png)
-
 Note that several of the services integrated into BluOS, such as Tidal, have their
 own APIs that can be used directly instead of (or in addition to) via the integrated
 API in BluOS. For Tidal, se [tidalshell](https://github.com/albertony/tidalshell) - my PowerShell wrapper for the Tidal API.
+
+## Reverse engineering
+
+[Telerik Fiddler](https://www.telerik.com/fiddler) is my main tool for reverse engineering APIs. In this case the official desktop client
+application is based on Electron (Chromium), and then it is possible to open up the built-in developer tools using "secret" shortcut
+Ctrl+Shift+E (or Ctrl+E+V), which is very useful.
 
 # BluOS API
 
