@@ -8,13 +8,13 @@ BluOS is an advanced operating system and music management software (https://nad
 
 Note that several of the services integrated into BluOS, such as Tidal, have their
 own APIs that can be used directly instead of (or in addition to) via the integrated
-API in BluOS. For Tidal, se [tidalshell](https://github.com/albertony/tidalshell) - my PowerShell wrapper for the Tidal API.
+API in BluOS. For Tidal, see [tidalshell](https://github.com/albertony/tidalshell) - my PowerShell wrapper for the Tidal API.
 
-## Reverse engineering
+## Disclaimer
 
-[Telerik Fiddler](https://www.telerik.com/fiddler) is my main tool for reverse engineering APIs. In this case the official desktop client
-application is based on Electron (Chromium), and then it is possible to open up the built-in developer tools using "secret" shortcut
-Ctrl+Shift+E (or Ctrl+E+V), which is very useful.
+Most of the information here was found by reverse engineering the BluOS Controller desktop application.
+Since then an official API documentation has been published on [bluesound.com/downloads](https://www.bluesound.com/downloads/).
+Until I can make time for a complete review there may be discrepancies. More about [sources](#sources) at the end.
 
 # BluOS API
 
@@ -483,4 +483,17 @@ be retrieved with an HTTP Get request with parameter 'print' set to integer 1 (h
 
 # Sources
 
-The starting point was a [thread](https://helpdesk.bluesound.com/discussions/viewtopic.php?f=4&t=2293&sid=e011c0bdf3ede3ea1aeb057de63c1da8) on the official Bluesound forum. I also looked at the [Python Bluesound API](https://github.com/venjum/bluesound) by @venjum, which have implemented many of the basic features mentioned in the thread. But most of the information is from my own investigations, mainly by using [Fiddler](https://www.telerik.com/fiddler) to trace what the [BluOS Controller desktop application](https://www.bluesound.com/downloads/) is doing.
+The starting point was a [thread](https://helpdesk.bluesound.com/discussions/viewtopic.php?f=4&t=2293&sid=e011c0bdf3ede3ea1aeb057de63c1da8)
+on the official Bluesound forum. I also looked at the [Python Bluesound API](https://github.com/venjum/bluesound) by @venjum, which have
+implemented many of the basic features mentioned in the thread.
+
+Most of the information is from my own investigations, mainly by reverse engineering what the
+[BluOS Controller desktop application](https://www.bluesound.com/downloads/) is doing.
+My main tool for reverse engineering APIs is [Telerik Fiddler](https://www.telerik.com/fiddler).
+In this case the official desktop client application is based on Electron (Chromium), and then it
+is possible to open up the built-in developer tools using "secret" shortcut Ctrl+Shift+E (or Ctrl+E+V),
+which is also very useful.
+
+Since this was written an official API documentation has been published on [bluesound.com/downloads](https://www.bluesound.com/downloads/),
+as a downloadable PDF. There are also different driver packages for integrating into specific home automation systems.
+I have not yet reviewed my own findings in light of this documentation.
