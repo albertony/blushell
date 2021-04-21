@@ -33,16 +33,16 @@ REST API unless specifically stated otherwise.
 
 Without parameters it will resume playback from the current position of the play queue or the latest stream.
 
-Optional parameter 'id' can be set to a positive integer identifying the item number in the play queue to start playback from.
+Optional parameter `id` can be set to a positive integer identifying the item number in the play queue to start playback from.
 
-Optional parameter 'seek' can be set to a integer representing number of seconds into the current track to start playback from.
+Optional parameter `seek` can be set to a integer representing number of seconds into the current track to start playback from.
 
-Optional parameter 'url' can be set directly to a stream url to play. This can
+Optional parameter `url` can be set directly to a stream url to play. This can
 be any streamable media url, such as an mp3 file, or it can be an "internal"
 url identifier used in BluOS, e.g. `Capture:bluez:bluetooth` or `Tidal​:radio:track/43781115` (the latter from the trackstationid attribute
 of /Songs response from Tidal service).
 
-The [response](Samples/Play.xml) indicates the resulting state, which is also reported by /Status. On success the state should be 'play'.
+The [response](Samples/Play.xml) indicates the resulting state, which is also reported by /Status. On success the state should be `play`.
 
 **Additional notes regarding url playback**
 
@@ -53,15 +53,15 @@ earlier versions to enter a custom URL in the Configure Player Menu." (https://s
 In addition to the REST API method for playing url, the Web interface also has
 support for it. On http://<device_address>/playurl there is an interactive input form
 for entering an url, and it can be triggered programmatically by sending a HTTP Post
-request with parameter 'url' containing the stream URL.
+request with parameter `url` containing the stream URL.
 
 ### /Pause
 
 Without parameters it will suspend playback at the current position, if it is currently playing.
 
-The [response](Samples/Pause.xml) indicates the resulting state, which is also reported by /Status. On success the state should be 'pause'.
+The [response](Samples/Pause.xml) indicates the resulting state, which is also reported by /Status. On success the state should be `pause`.
 
-Optional parameter 'toggle' can be set to integer value 1 to toggle between play and pause states. The response indicates the resulting state, which is also reported by /Status. On success the state could be either ['play'](Samples/Pause_Toggle1.xml) or ['pause'](Samples/Pause_Toggle2.xml).
+Optional parameter `toggle` can be set to integer value 1 to toggle between play and pause states. The response indicates the resulting state, which is also reported by /Status. On success the state could be either [`play`](Samples/Pause_Toggle1.xml) or [`pause`](Samples/Pause_Toggle2.xml).
 
 ### /Stop
 
@@ -69,29 +69,29 @@ Stop playback. The official app seem to only supports play and pause as interact
 operations, not stop. When device is activated from "vacation mode" it is in the
 stopped state.
 
-The [response](Samples/Stop.xml) indicates the resulting state, which is also reported by /Status. On success the state should be 'stop'.
+The [response](Samples/Stop.xml) indicates the resulting state, which is also reported by /Status. On success the state should be `stop`.
 
 ### /Skip
 
 Moves playback to the next item in the current play queue, wrapping around to
 first when currently at the last item. The [response](Samples/Skip.xml) contains
-the 'id' value of the moved to item.
+the `id` value of the moved to item.
 
 ### /Back
 
 Moves playback to the previous item in the current play queue, wrapping around
 to last when currently at the first item. The [response](Samples/Back.xml) contains
-the 'id' value of the moved to item.
+the `id` value of the moved to item.
 
 ### /Repeat
 
-Without parameters the [response](Samples/Repeat.xml) returns the 'id' of the current play queue and the current
+Without parameters the [response](Samples/Repeat.xml) returns the `id` of the current play queue and the current
 state of the repeat option. Value is an integer with the following meaning:
-* 0 means repeat entire playqueue
-* 1 means repeat current track
-* 2 means no repeat
+* `0` means repeat entire playqueue
+* `1` means repeat current track
+* `2` means no repeat
 
-Optional parameter 'state' can be specified to modify, with an integer value
+Optional parameter `state` can be specified to modify, with an integer value
 indicating the repeat mode to set. The [response](Samples/Repeat_modify.xml) indicates
 the resulting state.
 
@@ -101,13 +101,13 @@ The current state can be retrieved from the /Status request as well.
 
 Without parameters this does *not* (just) return the current state, but it turns shuffle off! To get the current state without modifying one must fetch it from the /Status request.
 
-The [response](Samples/Shuffle.xml) contains the 'id' of the current play queue,
+The [response](Samples/Shuffle.xml) contains the `id` of the current play queue,
 and the current state of the repeat option (although the current state may not be
 included when shuffle is off). Value is an integer with the following meaning:
-* 0 means off
-* 1 means on
+* `0` means off
+* `1` means on
 
-Optional parameter 'state' can be specified to modify, with an integer value
+Optional parameter `state` can be specified to modify, with an integer value
 indicating the repeat mode to set. The [response](Samples/Shuffle_modify.xml)
 indicates the resulting state.
 
@@ -116,53 +116,53 @@ indicates the resulting state.
 Without parameters the [response](Samples/Volume.xml) informs about the current
 setting, in percent and dB unit.
 
-Optional parameter 'level' can be specified to modify, with an integer value
+Optional parameter `level` can be specified to modify, with an integer value
 between 0 and 100 specifying the volume in percent to set. The
 [response](Samples/Volume_modify.xml) when modifying does only contain the changed
 setting in percent, not in dB unit as when just requesting the current value.
 
-The current volume in percent ('volume') and dB ('outlevel') can be retrieved
+The current volume in percent (`volume`) and dB (`outlevel`) can be retrieved
 from the /SyncStatus request as well, and in percent also from the /Status request.
 
 ### /Playlist
 
 Without parameters the [response](Samples/Playlist.xml) describes the current play queue.
-It is identified by a 'name' and 'id', and a list of entries ('song') with
-increasing 'id' starting from 0. The entry ids are referenced in the response from
+It is identified by a `name` and `id`, and a list of entries (`song`) with
+increasing `id` starting from 0. The entry ids are referenced in the response from
 the /Skip and /Prev requests. The playlist id is also referenced from
 other requests working on the play queue, and it seems to be an integer
 that is incremented whenever the playlist is changed.
 
-Optional parameters 'start' and/or 'end' can be specified to return
-an excerpt of the play queue. The values refer to 'id' of playlist
-entries, zero indexed, and the specified end is inclusive (start=0&end=0
+Optional parameters `start` and/or `end` can be specified to return
+an excerpt of the play queue. The values refer to `id` of playlist
+entries, zero indexed, and the specified end is inclusive (`start=0&end=0`
 will give a single, the first, item).
 
 ### /Clear
 
 Empties the current play queue, and returns the same [response](Samples/Clear.xml)
-as a request to /Playlist would do: An empty 'playlist' element but
-an incremented 'id'.
+as a request to /Playlist would do: An empty `playlist` element but
+an incremented `id`.
 
 ### /Save
 
-Saves the current play queue as a new playlist. Required parameter 'name'
+Saves the current play queue as a new playlist. Required parameter `name`
 specifies the playlist name.
-Response on success contains an element 'saved', with a sub-element 'entries'
+Response on success contains an element `saved`, with a sub-element `entries`
 containing the number of items in the saved playlist.
 
 ### /Add
 
 Adding items to the current playqueue, and optionally start playback.
 
-Optional argument 'service' indicates where the item is located.
+Optional argument `service` indicates where the item is located.
 
-Optional argument 'playlist', 'file', 'albumid', 'artistid', etc identifies the item.
+Optional argument `playlist`, `file`, `albumid`, `artistid`, etc identifies the item.
 
-Optional argument 'where' can be specified to indicate where in the queue
-to add the new items. Possible values are 'next', 'last', 'nextAlbum', etc.
+Optional argument `where` can be specified to indicate where in the queue
+to add the new items. Possible values are `next`, `last`, `nextAlbum`, etc.
 
-Optional argument 'playnow' can be set to value 1 to trigger playback.
+Optional argument `playnow` can be set to value 1 to trigger playback.
 
 **TODO: More details needed!**
 
@@ -177,7 +177,7 @@ BluOS supports grouping players in different modes:
 In the official app there are two main roads to creating a group:
 
 * Quick create multi-player group from the player drawer, either
-by clicking '+' symbol on players to add to current player's group,
+by clicking `+` symbol on players to add to current player's group,
 or by clicking the "Group all" button. These will always be multi-
 player groups, and they will get an auto-generated name as a
 combination of the individual names of the players.
@@ -189,22 +189,22 @@ and also give the group a custom name.
 ### /AddSlave
 
 A device can be added to a group by specifying the device address
-in parameter 'slave'. It seems to support alternative parameter
-'slaves' where multiple devices can be specified at once, probably
+in parameter `slave`. It seems to support alternative parameter
+`slaves` where multiple devices can be specified at once, probably
 comma-separated, but have not had a chance to test this.
 
-Optional parameter 'port' (or 'ports') can be specified if any
+Optional parameter `port` (or `ports`) can be specified if any
 of the devices use a non-standard port number (other than the
 default 11000).
 
-Optional parameter 'group' can be specified to give the group a name,
+Optional parameter `group` can be specified to give the group a name,
 by default it will be generated from the names of the devices.
 
 This will set up a multi-player group. To set up a stereo pair
-one must also specify parameters 'channelMode' and 'slaveChannelMode',
-one of them with value 'left' and the other one with value 'right'.
-(Multi-player group have implicit value 'default' for both
-'channelMode' and 'slaveChannelMode').
+one must also specify parameters `channelMode` and `slaveChannelMode`,
+one of them with value `left` and the other one with value `right`.
+(Multi-player group have implicit value `default` for both
+`channelMode` and `slaveChannelMode`).
 
 TODO: How to set up Home theater group?
 
@@ -214,8 +214,8 @@ of slaves added.
 ### /RemoveSlave
 
 Removes a device from a group, and the entire when there are only
-one device in it. Required parameter 'slave' or 'slaves', and
-optional parameter 'port' or 'ports'.
+one device in it. Required parameter `slave` or `slaves`, and
+optional parameter `port` or `ports`.
 
 The [response](Samples/RemoveSlave.xml) contains the SyncStatus.
 
@@ -240,7 +240,7 @@ Sample [response](Samples/Presets.xml).
 
 ### /Preset
 
-Activates a preset (starts playback), identified by parameter 'id'.
+Activates a preset (starts playback), identified by parameter `id`.
 
 Sample [response for playlist preset](Samples/Preset_playlist.xml)
 and [radio preset](Samples/Preset_radio.xml).
@@ -249,14 +249,14 @@ and [radio preset](Samples/Preset_radio.xml).
 
 Without parameters it lists existing presets, identical to /Presets.
 
-To modify a preset the preset number must be specified in parameter 'id'.
+To modify a preset the preset number must be specified in parameter `id`.
 If no other parameters are specified it will remove any existing presets with that identifier.
-To set a new preset the service must be specified in parameter 'service' (e.g. 'Capture', or 'Tidal'),
-and the BluOS specific reference must be specified in parameter 'encoded_url' (for example for the
+To set a new preset the service must be specified in parameter `service` (e.g. `Capture`, or `Tidal`),
+and the BluOS specific reference must be specified in parameter `encoded_url` (for example for the
 preset to switch active source to Bluetooth, the url is "Capture:bluez:bluetooth"). A preset name
-must be specified in parameter 'name'. Then there is an option to include a volume level, so that
-activating the preset also changes the volume, then the parameter 'volume' must specify the volume in percent.
-There is also a parameter 'image'.
+must be specified in parameter `name`. Then there is an option to include a volume level, so that
+activating the preset also changes the volume, then the parameter `volume` must specify the volume in percent.
+There is also a parameter `image`.
 
 In all variants the [response](Samples/Presets.xml) is the list of current presets, as also returned by /Presets.
 
@@ -265,18 +265,18 @@ In all variants the [response](Samples/Presets.xml) is the list of current prese
 Returns available playlists. Note /Playlist (without ending s) is similar,
 but not directly related as it returns the current play queue.
 
-Without parameters it returns local device playlists, as if parameter 'service'
-is set to 'LocalMusic'. Playlists from other services can be listed by setting
-parameter 'service', e.g. to 'Tidal'.
+Without parameters it returns local device playlists, as if parameter `service`
+is set to `LocalMusic`. Playlists from other services can be listed by setting
+parameter `service`, e.g. to `Tidal`.
 
-Sample [response](Samples/Playlists.xml) for the default service ('LocalMusic'),
+Sample [response](Samples/Playlists.xml) for the default service (`LocalMusic`),
 and [response](Samples/Playlists_Tidal.xml) for service=Tidal.
 
 At least for Tidal, the default is to return your personal playlists. Other
 compiled playlists can be retrieved by adding various parameters:
-* category : new, recommended, local, FAVOURITES
-* genre : Local, Pop, Rock, etc (genreid of items returned by /Genres).
-* mood : relax, party, workout, etc (genreid of items returned by /Genres with category=moods)
+* `category` : `new`, `recommended`, `local`, `FAVOURITES`
+* `genre` : `Local`, `Pop`, `Rock`, etc (genreid of items returned by /Genres).
+* `mood` : `relax`, `party`, `workout`, etc (genreid of items returned by /Genres with `category=moods`)
 
 Playlists can be created by /Save, /AddToPlaylist etc..
 
@@ -286,9 +286,9 @@ TODO...
 
 Create (or modify) playlists.
 
-Parameter 'name' must be set with the name to save it as.
-Parameter 'service' identifies where to save the playlist, e.g. 'LocalMusic' to save it on the device.
-Parameters 'sourceService' and 'songid' identifies the item to add to the playlist.
+Parameter `name` must be set with the name to save it as.
+Parameter `service` identifies where to save the playlist, e.g. `LocalMusic` to save it on the device.
+Parameters `sourceService` and `songid` identifies the item to add to the playlist.
 
 TODO...
 
@@ -318,56 +318,61 @@ TODO...
 ### /Genres
 
 Lists the generes supported by a given service, default is the local player
-but parameter 'service' can be specified to see genres from other services
+but parameter `service` can be specified to see genres from other services
 (such as Tidal).
 
 Other service-specific parameters may be supported, e.g. Tidal supports
-'category=moods' to get the categories of special "mood" playlists.
+`category=moods` to get the categories of special "mood" playlists.
 
 Sample [default response](Samples/Genres.xml),
 [service=Tidal response](Samples/Genres_Tidal.xml).
 
 ### /Artists, /Albums and /Songs
 
-For Tidal navigation the parameter 'service' must be set to 'Tidal.
+For Tidal navigation the parameter `service` must be set to `Tidal`.
 In addition one need to specify one or more parameters for navigating
 into the structure, similar to /Playlists:
-* category : new, rising, recommended, top, local, FAVOURITES
-* genre : Local, Pop, Rock, etc (genreid of items returned by /Genres).
+* `category` : `new`, `rising`, `recommended`, `top`, `local`, `FAVOURITES`
+* `genre` : `Local`, `Pop`, `Rock`, etc (genreid of items returned by /Genres).
 
-For /Songs one can specify attribute 'playlistid' to list all songs
-in a specified playlist, or 'albumid' to list all songs in an album.
+For /Songs one can specify attribute `playlistid` to list all songs
+in a specified playlist, or `albumid` to list all songs in an album.
 
 ### /Search
 
-To perform a generic search, specify parameter 'expr' with the search string as value. It will search local music by default, but to search other services add parameter 'service' (e.g. service=Tidal). The response contains search results, groupd on artist, album and song.
+To perform a generic search, specify parameter `expr` with the search string as value. It will search local music by default, but to search other services add parameter `service` (e.g. service=Tidal). The response contains search results, groupd on artist, album and song.
 
 Sample [default response](Samples/Search_Tidal_expr_Bon.xml),
 [service=Tidal response](Samples/Search_expr_Bon.xml).
 
 ### /RadioSearch
 
-To search for radio stations, using a similar syntax as /Search: Parameter 'expr' with the search string, and 'service' to identify the service - here TuneIn is the default service.
+To search for radio stations, using a similar syntax as /Search: Parameter `expr` with the search string, and `service` to identify the service - here TuneIn is the default service.
 
 Sample [response](Samples/RadioSearch_expr_Bon.xml).
 
 ### /Artwork
 
 Redirects to the image file representing an item, such as an artist, album, song,
-radio station. Parameter identifies the item, either 'songid', 'albumid', 'artistid'
-or 'playlistid'.
+radio station. Parameter identifies the item, either `songid`, `albumid`, `artistid`
+or `playlistid`.
 
 Sample [response](Samples/Artwork.xml).
 
 ## Configuration
+
+## /Name
+
+HTTP Post request with parameter `set` with the new name as the value will set the
+name of the player - the "room name".
 
 ### /Status
 
 Gives the current status of the player. This is called frequently by the offical
 applications to keep it up to date with any changes from other controllers.
 
-Two optional parameters, 'timeout', which can be set to an integer value
-which probably defines number of seconds, and 'etag', which is probably an
+Two optional parameters, `timeout`, which can be set to an integer value
+which probably defines number of seconds, and `etag`, which is probably an
 [HTTP entity tag](https://en.wikipedia.org/wiki/HTTP_ETag), seem to be
 used for keeping the client state current (e.g. show correct currently
 playing song as the playback progresses through the play queue), and for
@@ -409,52 +414,83 @@ Sets the sleep timer, each request will cycle through the supported settings: 15
 ### /Alarms
 
 Without parameters the [response](Samples/Alarms.xml) lists all existing alarm definitions. 
-Parameter 'tz' can be set specify time zone, value is string containing the "Olson"
+Parameter `tz` can be set specify time zone, value is string containing the "Olson"
 [time zone name](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones).
 
 Alarms can be created by setting various parameters:
-* hour : Hour of day as an integer.
-* minute : Minutes of the hour as an integer.
-* days : Repetition, specified as string with 7 binary values representing weekdays (SMTWTFS), "00000000" means no repetition, "1010000" means sundays and tuesdays.
-* duration : Timeout in minutes before the alarm turns off automatically, 0 means never. Official application supports between 15 minutes and 2 hours.
-* source : The alarm sound.
-* volume : The alarm sound volume, in percent.
-* fadeIn : If the alarm sound should fade in, value is 0 or 1.
-* image : TODO...
-* url : TODO...
-* enable: Value is 1. Official application does not support enabling/disabling alarms, so not sure what this is for, if we can set it to value 0? TODO...
-* tz : The timezone name.
+* `hour` : Hour of day as an integer.
+* `minute` : Minutes of the hour as an integer.
+* `days` : Repetition, specified as string with 7 binary values representing weekdays (SMTWTFS), "00000000" means no repetition, "1010000" means sundays and tuesdays.
+* `duration` : Timeout in minutes before the alarm turns off automatically, 0 means never. Official application supports between 15 minutes and 2 hours.
+* `source` : The alarm sound.
+* `volume` : The alarm sound volume, in percent.
+* `fadeIn` : If the alarm sound should fade in, value is 0 or 1.
+* `image` : TODO...
+* `url` : TODO...
+* `enable`: Value is 1. Official application does not support enabling/disabling alarms, so not sure what this is for, if we can set it to value 0? TODO...
+* `tz` : The timezone name.
 
 Reponse from creating alarms is the same as /Alarms; listing all current alarms.
 
-Alarms can be modified by including parameter 'id' identifying the alarm entry, and then any of the above parameters that should be modified. Response is same as /Alarms; listing all current alarms.
+Alarms can be modified by including parameter `id` identifying the alarm entry, and then any of the above parameters that should be modified. Response is same as /Alarms; listing all current alarms.
 
-Alarms can be deleted by including parameter 'id' identifying the alarm entry and then parameter 'delete' with value 1. Response is same as /Alarms; listing all current alarms.
+Alarms can be deleted by including parameter `id` identifying the alarm entry and then parameter `delete` with value 1. Response is same as /Alarms; listing all current alarms.
 
 ### /audiomodes
 
 Without parameters the [response](Samples/audiomodes.xml) indicates the current
-value of all "audio mode" related settings.
+value of all "audio mode" related settings. EDIT: Tested 21.04.2021 and did no longer
+get current values, but changes chan still be performed as described next.
 
-Changes must be performed using an HTTP Post request (not a Get request like most other operations on the REST API) with parameters specifying the new value of any settings to change.
+NOTE: The audio options vary depending on the model of the BluOS Player,
+see the following [article](https://support.bluos.net/hc/en-us/articles/360036429314-Adjusting-Audio-Settings).
 
-Adjusting the Bluetooth mode can be done by specifying parameter 'bluetoothAutoplay' with
-an integer value which is one of the following:
-* 0 means manual
-* 1 means automatic
-* 2 means guest
-* 3 means off
+Changes must be performed using an HTTP Post request (not a Get request like most other operations on the REST API),
+and with parameters specifying the new value of any settings to change:
+* `bluetoothAutoplay`, integer value:
+  * `0` means manual
+  * `1` means automatic
+  * `2` means guest
+  * `3` means off
+* `channelMode`
+  * `default` (means mono output on a mono speaker like Flex, otherwise probably stereo output?)
+  * `left`
+  * `right`
+  * `mono` (guessing this is a value for setting mono output on a stereo speaker?)
+* `volumeLimits`
+  * Value is the decibel integer range separated by comma, e.g.`-90,0`.
+* `volume`
+* `volMin`
+* `volMax`
+* `volMinDefault`
+* `volMaxDefault`
+* `volMinLimit`
+* `volMaxLimit`
+* `volRamp`
+* `volRampDefault`
+* `mqaDisable`
+* `crossover`
+* `canFixVolume`
+* `replayGainMode`
+  * `none`
+  * `track`
+  * `album`
+  * `smart`
+* `captureLatency`
+* `captureAutoplay`
 
-TODO (more audiomodes settings)...
+### /alsa_setting
+
+A post request with parameter `reset` set to value `1` will reset all audio settings to defaults.
 
 ### /ledbrightness
 
 Adjusting the LED brightness setting is possible via the Web API, not the REST API.
-It is achieved by sending an HTTP Post request with parameter 'brightness' with
+It is achieved by sending an HTTP Post request with parameter `brightness` with
 string value which is one of:
-* default
-* dim
-* off
+* `default`
+* `dim`
+* `off`
 
 ### /ShowIRCodes
 
@@ -472,14 +508,14 @@ TODO...
 
 Rebooting the player device is possible via the Web API, not the REST API. Using the basic
 web interface, http://<device_address>/reboot will give you an interactive user interface
-with buttons Yes and No (parameter 'noheader=1' can be added for an even more minimalistic
+with buttons Yes and No (parameter `noheader=1` can be added for an even more minimalistic
 and stand-alone web interface, without the navigation menu on top). An HTTP Post request
-with parameter 'yes' will trigger the actual reboot.
+with parameter `yes` will trigger the actual reboot.
 
 ### /diag
 
 The Web interface supplies an internal diagnostics log in text format, which can
-be retrieved with an HTTP Get request with parameter 'print' set to integer 1 (http://<device_address>/diag?print=1).
+be retrieved with an HTTP Get request with parameter `print` set to integer 1 (http://<device_address>/diag?print=1).
 
 # Sources
 

@@ -674,7 +674,7 @@ function Blu-Audiomodes()
 		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
 		[string] $Device
 	)
-	(Blu-Invoke $Device "audiomodes").audiomode	
+	(Blu-Invoke $Device "audiomodes").audiomode
 }
 function Blu-BluetoothSetting()
 {
@@ -693,6 +693,22 @@ function Blu-BluetoothSetting()
 		$Modes[(Blu-Invoke $Device "audiomodes" @{'bluetoothAutoplay'=$State} -Method 'Post').audiomode.bluetoothAutoplay]
 	} else {
 		$Modes[(Blu-Audiomodes $Device).bluetoothAutoplay]
+	}
+}
+function Blu-OutputMode()
+{
+	[CmdletBinding(SupportsShouldProcess=$True)]
+	param(
+		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
+		[string] $Device,
+		
+		[ValidateSet('default', 'left', 'right')] [string] $Mode
+	)
+	# Argument Mode is optional, default is to return current state.
+	if ($Mode) {
+		(Blu-Invoke $Device "audiomodes" @{'channelMode'=$Mode.ToLower()} -Method 'Post').audiomode.channelMode
+	} else {
+		(Blu-Audiomodes $Device).channelMode
 	}
 }
 function Blu-Brightness()
