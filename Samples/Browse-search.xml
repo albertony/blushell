@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<browse sid="5" searchKey="Qobuz:Search" serviceIcon="/Sources/images/QobuzIcon.png" serviceName="Qobuz" service="Qobuz" type="menu">
+<item text="Artists" browseKey="/Artists?service=Qobuz&amp;expr=miles" type="link"/>
+<item text="Albums" browseKey="/Albums?service=Qobuz&amp;expr=miles" type="link"/>
+<item text="Songs" browseKey="/Songs?service=Qobuz&amp;expr=miles" type="link"/>
+<item text="Playlists" browseKey="/Playlists?service=Qobuz&amp;expr=miles" type="link"/>
+</browse>

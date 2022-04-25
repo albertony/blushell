@@ -229,6 +229,18 @@ details can be found by inspecting this!
 
 TODO: More details...
 
+### /Browse
+
+This can be used to browse the content of configured services (Tidal, Qobuz, TuneIn, etc). The first call gets a list of menu items with 'browse keys' which can be used in subsequent calls. Provided search keys can be used to search the service that is being browsed.
+
+Samples:
+
+ [/Browse](Samples/Browse.xml)
+
+[/Browse?key=Qobuz:](Samples/Browse-key.xml)
+
+[/Browse?key=Qobuz:Search&q=miles](Samples/Browse-search.xml)
+
 ### /Presets
 
 Returns list of all current presets. Players such as Bluesound Flex
@@ -345,6 +357,8 @@ To perform a generic search, specify parameter `expr` with the search string as 
 Sample [default response](Samples/Search_Tidal_expr_Bon.xml),
 [service=Tidal response](Samples/Search_expr_Bon.xml).
 
+Another way of searching is through /Browse (see above).
+
 ### /RadioSearch
 
 To search for radio stations, using a similar syntax as /Search: Parameter `expr` with the search string, and `service` to identify the service - here TuneIn is the default service.
@@ -359,6 +373,11 @@ or `playlistid`.
 
 Sample [response](Samples/Artwork.xml).
 
+### /Info
+Gets a html page with a description of an artist, album or song.
+
+Sample: [/Info?service=Qobuz&service=Qobuz&artistid=574073](Samples/Info.html)
+
 ## Configuration
 
 ## /Name
@@ -372,18 +391,11 @@ Gives the current status of the player. This is called frequently by the offical
 applications to keep it up to date with any changes from other controllers.
 
 Two optional parameters, `timeout`, which can be set to an integer value
-which probably defines number of seconds, and `etag`, which is probably an
-[HTTP entity tag](https://en.wikipedia.org/wiki/HTTP_ETag), seem to be
-used for keeping the client state current (e.g. show correct currently
-playing song as the playback progresses through the play queue), and for
-synchronization between multiple controllers (e.g. show correct volume
-level after another controller changes it). The /SyncStatus request is
-probably also as part of this. The official desktop client application
-send these requests regularly (every few second).
+which defines number of seconds, and `etag`, which is an
+[HTTP entity tag](https://en.wikipedia.org/wiki/HTTP_ETag), are
+used for 'long polling', keeping the request open until the responsive is different from the previous response (using the etag for comparison) or until the timeout has been reached. /SyncStatus should be polled if only the name, volume and grouping status of a player is of interest. /Status should be polled if current playback status is needed. The official desktop client application sends these requests regularly (every few seconds).
 
-TODO: I am not sure how this mechanism work. The official destkop client
-does not send "If-None-Match" headers, which is normally used in Etag
-concurrency control (Tidal does, it is implemented in [tidalshell](https://github.com/albertony/tidalshell)).
+(The official destkop client does not send "If-None-Match" headers, which is normally used in Etag concurrency control Tidal does, it is implemented in [tidalshell](https://github.com/albertony/tidalshell)).
 
 
 Sample [response](Samples/Status.xml),
@@ -519,10 +531,9 @@ be retrieved with an HTTP Get request with parameter `print` set to integer 1 (h
 
 # Sources
 
-The starting point was a [thread](https://helpdesk.bluesound.com/discussions/viewtopic.php?f=4&t=2293&sid=e011c0bdf3ede3ea1aeb057de63c1da8)
-on the official Bluesound forum. I also looked at the [Python Bluesound API](https://github.com/venjum/bluesound) by @venjum, which have
-implemented many of the basic features mentioned in the thread.
+The starting point was a [thread](https://helpdesk.bluesound.com/discussions/viewtopic.php?f=4&t=2293&sid=e011c0bdf3ede3ea1aeb057de63c1da8) on the official Bluesound forum. I also looked at the [Python Bluesound API](https://github.com/venjum/bluesound) by @venjum, which have implemented many of the basic features mentioned in the thread.
 
+## Reverse engineering
 Most of the information is from my own investigations, mainly by reverse engineering what the
 [BluOS Controller desktop application](https://www.bluesound.com/downloads/) is doing.
 My main tool for reverse engineering APIs is [Telerik Fiddler](https://www.telerik.com/fiddler).
@@ -530,6 +541,9 @@ In this case the official desktop client application is based on Electron (Chrom
 is possible to open up the built-in developer tools using "secret" shortcut Ctrl+Shift+E (or Ctrl+E+V),
 which is also very useful.
 
-Since this was written an official API documentation has been published on [bluesound.com/downloads](https://www.bluesound.com/downloads/),
-as a downloadable PDF. There are also different driver packages for integrating into specific home automation systems.
-I have not yet reviewed my own findings in light of this documentation.
+You could also use [Wireshark](https://www.wireshark.org).
+
+## Official API documentation
+Since this was written an official API documentation has been published on [bluesound.com/downloads](https://www.bluesound.com/downloads/), as a downloadable PDF. The official documentation is incomplete.
+
+There are also different plugins for integrating into specific home automation systems.

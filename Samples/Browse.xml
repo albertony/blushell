@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<browse sid="5" type="menu">
+<item text="TuneIn" image="/Sources/images/TuneInIcon.png" browseKey="TuneIn:" type="link"/>
+<item text="Calm Radio" image="/Sources/images/CalmIcon.png" browseKey="CalmRadio:" type="link"/>
+<item text="Neil Young Archives" image="/Sources/images/NYAIcon.png" browseKey="NYA:" type="link"/>
+<item text="Qobuz" image="/Sources/images/QobuzIcon.png" browseKey="Qobuz:" type="link"/>
+<item text="Radio Paradise" image="/Sources/images/ParadiseRadioIcon.png" browseKey="RadioParadise:" type="link"/>
+<item text="Spotify" playURL="/Play?url=Spotify%3Aplay" image="/Sources/images/SpotifyIcon.png" type="audio"/>
+</browse>
