@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<browse sid="5" searchKey="Qobuz:Search" serviceIcon="/Sources/images/QobuzIcon.png" serviceName="Qobuz" service="Qobuz" type="menu">
+<item text="New Albums" browseKey="/Albums?service=Qobuz&amp;category=new-releases" type="link"/>
+<item text="Recommended Playlists" browseKey="/Playlists?service=Qobuz&amp;category=featured" type="link"/>
+<item text="Popular Albums" browseKey="/Albums?service=Qobuz&amp;category=most-streamed" type="link"/>
+<item text="Genres" browseKey="Qobuz:genreGroup/4" type="link"/>
+<item text="Favourites" browseKey="Qobuz:menuGroup/5" type="link"/>
+<item text="Recommended Albums" browseKey="/Albums?service=Qobuz&amp;category=editor-picks" type="link"/>
+</browse>
