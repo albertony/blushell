@@ -114,15 +114,28 @@ indicates the resulting state.
 ### /Volume
 
 Without parameters the [response](Samples/Volume.xml) informs about the current
-setting, in percent and dB unit.
+setting. Mainly current volume level in percent, but also the level in dB unit,
+and information about configured volume offset in dB, and if muted.
 
-Optional parameter `level` can be specified to modify, with an integer value
-between 0 and 100 specifying the volume in percent to set. The
-[response](Samples/Volume_modify.xml) when modifying does only contain the changed
-setting in percent, not in dB unit as when just requesting the current value.
+Optional parameter `level` can be specified to set a new volume level, with an
+integer value between 0 and 100 specifying the volume to set in percent (within
+the configured available volume range for the player). ~~The
+[response](Samples/Volume_modify-OLD.xml) when modifying does only contain the changed
+setting in percent, not in dB unit as when just requesting the current value.~~
+The volume can also be set in dB scale to a value within the configured available volume
+range for the player (default -90 - 0 dB) with parameter `abs_db`, alternatively with
+parameter `db` and a relative value as a positive or negative number (typical value 2)
+which works similar to classical volume up/down buttons. Mute can also be controlled
+using parameter `mute`.
 
-The current volume in percent (`volume`) and dB (`outlevel`) can be retrieved
-from the /SyncStatus request as well, and in percent also from the /Status request.
+Note that to control the volume for player groups as a whole, you will have to send the
+request to the main player device and also include the parameter `tell_slaves` set to
+value `1`. This does not apply to fixed groups, called zone in /SyncStatus response,
+where any volume change applies to the entire group.
+
+The current volume in percent (`volume`) and dB (`db`, previously `outlevel`) can be
+retrieved from the /SyncStatus request as well, and in percent also from the /Status
+request.
 
 ### /Playlist
 
@@ -395,7 +408,7 @@ which defines number of seconds, and `etag`, which is an
 [HTTP entity tag](https://en.wikipedia.org/wiki/HTTP_ETag), are
 used for 'long polling', keeping the request open until the responsive is different from the previous response (using the etag for comparison) or until the timeout has been reached. /SyncStatus should be polled if only the name, volume and grouping status of a player is of interest. /Status should be polled if current playback status is needed. The official desktop client application sends these requests regularly (every few seconds).
 
-(The official destkop client does not send "If-None-Match" headers, which is normally used in Etag concurrency control Tidal does, it is implemented in [tidalshell](https://github.com/albertony/tidalshell)).
+(The official desktop client does not send "If-None-Match" headers, which is normally used in Etag concurrency control Tidal does, it is implemented in [tidalshell](https://github.com/albertony/tidalshell)).
 
 
 Sample [response](Samples/Status.xml),
@@ -416,6 +429,25 @@ TODO: Have not yet dug into exactly how the synchronization mechanism works..
 Similar to /Services, this gives seem to return a more or less complete
 description of the navigation paths of settings in the user interface.
 A lot of API details can be found by inspecting this!
+
+Adding parameter `expand` with value 1 adds more details.
+
+TODO: More details...
+
+### /Version
+
+Returns the BluOS version number? However as of BluOS version 4.8.7 it returns version number 4.8.6...
+
+TODO: More details...
+
+### /ui
+
+Web API endpoint /ui has some internal information in different sub paths.
+
+Endpoint /ui/Home with parameter `playnum` set to a player number value, e.g. `1`,
+gives details similar to /Settings.
+
+Endpoint ui/reportServiceDuration with parameter `playnum` set to a player number value, e.g. `1`,
 
 TODO: More details...
 
@@ -495,6 +527,20 @@ and with parameters specifying the new value of any settings to change:
 
 A post request with parameter `reset` set to value `1` will reset all audio settings to defaults.
 
+### /captures
+
+Endpoint captures with parameters `playnum`, `device` and `action`.
+
+TODO...
+
+### /update
+
+TODO...
+
+### /UpdateDNS
+
+TODO...
+
 ### /ledbrightness
 
 Adjusting the LED brightness setting is possible via the Web API, not the REST API.
@@ -516,6 +562,10 @@ IR remote related?
 
 TODO...
 
+### /Doorbell
+
+Get request with parameter `play` set to integer 1 plays doorbell chimes.
+
 ### /reboot
 
 Rebooting the player device is possible via the Web API, not the REST API. Using the basic
@@ -527,7 +577,8 @@ with parameter `yes` will trigger the actual reboot.
 ### /diag
 
 The Web interface supplies an internal diagnostics log in text format, which can
-be retrieved with an HTTP Get request with parameter `print` set to integer 1 (http://<device_address>/diag?print=1).
+be retrieved with an HTTP Get request with parameter `print` set to integer 1 (http://<device_address>/diag?print=1). Here you can dig into a huge amount of technical details,
+including details from the linux operating system (process list, mount points, logs).
 
 # Sources
 
