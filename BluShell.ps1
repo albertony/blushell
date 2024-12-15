@@ -13,15 +13,24 @@
 #   - https://helpdesk.bluesound.com/discussions/viewtopic.php?f=4&t=2293&sid=e011c0bdf3ede3ea1aeb057de63c1da8
 #   - https://github.com/venjum/bluesound
 #
+param
+(
+	[Parameter(HelpMessage='Default hostname or IP address of the BluOS device to control')]
+	[string] $Device,
 
-$RestApiPort = "11000"
-$WebApiPort = "80"
+	[Parameter(HelpMessage='Port number of the REST API on the BluOS device, used for the majority of functions')]
+	[uint16] $RestApiPort = 11000,
+
+	[Parameter(HelpMessage='Port number for Web API on the BluOS device, used for a limited set of functions')]
+	[uint16] $WebApiPort = 80
+)
 
 function Blu-Invoke()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
 		[string] $Device = $Device,
 		
 		[string] $Path,
@@ -31,49 +40,62 @@ function Blu-Invoke()
 		[ValidateSet('Get', 'Post', 'Delete')]
 		[string] $Method = 'Get',
 		
-		[hashtable]$Headers,
+		[hashtable] $Headers,
 		
-		[switch] $WebApi # Use Web API endpoint instead of the default REST API endpoint
+		[switch] $WebApi, # Use Web API endpoint instead of the default REST API endpoint
+
+		[switch] $RawResponse
 	)
-	#$pathAndQuery = [uri]::EscapeUriString($Path).Replace("+", "%2B").Replace("#", "%23") # Additional escaping for '+' and '#' characters (but not sure if necessary), Uri escapes everything else for us (including %20 for space).
-	$pathAndQuery = $Path
+	#$PathAndQuery = [uri]::EscapeUriString($Path).Replace("+", "%2B").Replace("#", "%23") # Additional escaping for '+' and '#' characters (but not sure if necessary), Uri escapes everything else for us (including %20 for space).
+	$PathAndQuery = $Path
 	if ($Method.ToLower() -eq 'post') {
-		$body = $Options
-	} else {
-		if ($Options) {
-			$pathAndQuery += "?"
-			foreach ($param in $Options.GetEnumerator())
-			{
-				$pathAndQuery += [uri]::EscapeDataString($param.Key) + "="
-				if ($param.Value -is [array]) {
-					# Escape individual array items and then combine with comma ',' character (not escape the comma)
-					$escapedValues = @()
-					foreach($paramValue in $param.Value) {
-						$escapedValues += [uri]::EscapeDataString($paramValue)
-					}
-					$pathAndQuery += $escapedValues -join ','
-				} else {
-					$pathAndQuery += [uri]::EscapeDataString($param.Value)
+		$Body = $Options
+	} elseif ($Options) {
+		$PathAndQuery += "?"
+		foreach ($param in $Options.GetEnumerator()) {
+			$PathAndQuery += [uri]::EscapeDataString($param.Key) + "="
+			if ($param.Value -is [array]) {
+				# Escape individual array items and then combine with comma ',' character (not escape the comma)
+				$EscapedValues = @()
+				foreach($paramValue in $param.Value) {
+					$EscapedValues += [uri]::EscapeDataString($paramValue)
 				}
-				$pathAndQuery += "&"
+				$PathAndQuery += $EscapedValues -join ','
+			} else {
+				$PathAndQuery += [uri]::EscapeDataString($param.Value)
 			}
-			$pathAndQuery = $pathAndQuery.Remove($pathAndQuery.Length - 1)
+			$PathAndQuery += "&"
 		}
+		$PathAndQuery = $PathAndQuery.Remove($PathAndQuery.Length - 1)
 	}
 	$ApiUrl = "http://${Device}:$(if($WebApi){${WebApiPort}}else{${RestApiPort}})"
-	if ($PSCmdlet.ShouldProcess("${Device}", "Invoke")) {
-		# REAL MODE:
-		Invoke-RestMethod "${ApiUrl}/${pathAndQuery}" -Method $Method -Headers $Headers -Body $body
-	} else {
-		# TEST MODE:
-		Write-Host "Invoke-RestMethod ${ApiUrl}/${pathAndQuery} -Method $Method -Headers $Headers -Body $body"
-		if ($Headers) {
-			Write-Host -NoNewline "Headers:"
-			$Headers | Format-Table -HideTableHeaders
-		}
-		if ($Body) {
-			Write-Host -NoNewline "Body:"
-			$Body | Format-Table -HideTableHeaders
+	Write-Verbose "Invoke-RestMethod ${ApiUrl}/${PathAndQuery} -Method ${Method}$(if($Headers){" -Headers $($Headers | ConvertTo-Json -Compress)"})$(if($Body){" -Body $($Body | ConvertTo-Json -Compress)"})"
+	if ($PSCmdlet.ShouldProcess("${Device} ${Method} request ${PathAndQuery}", 'Invoke')) {
+		$Response = Invoke-RestMethod "${ApiUrl}/${PathAndQuery}" -Method $Method -Headers $Headers -Body $Body
+		if ($Response -is [System.Xml.XmlDocument]) { # Expecing XML from REST API, but not from Web API ($WebApi)
+			Write-Verbose $Response.OuterXml
+			if ($RawResponse) {
+				# Return entire response as is, i.e. typically a complete XmlDocument object.
+				$Response
+			} else {
+				# Instead of returning the complete XmlDocument object, including the xml prolog element,
+				# return the XmlElement representing the document element.
+				# In addition: If it is a simple element, with no attributes, and only a single XmlText
+				# child node, then return the textual value as a plain string instead of the element!
+				# Alt 1:
+				#$Properties = $_ | Get-Member -MemberType Property
+				#if ($Properties.Count -eq 1 -and $Properties[0].Name = '#text') {
+				# Alt 2:
+				#if ($Response.DocumentElement.Attributes.Count -eq 0 -and $Response.DocumentElement.ChildNodes.Count -eq 1 -and $Response.DocumentElement.ChildNodes[0].Name -eq '#text') {
+				# Alt 3:
+				if ($Response.DocumentElement.Attributes.Count -eq 0 -and $Response.DocumentElement.ChildNodes.Count -eq 1 -and $Response.DocumentElement.ChildNodes[0] -is [System.Xml.XmlText]) {
+					$Response.DocumentElement.ChildNodes[0].Value
+				} else {
+					$Response.DocumentElement
+				}
+			}
+		} else {
+			$Response
 		}
 	}
 }
@@ -86,17 +108,19 @@ function Blu-SyncStatus()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device
 	)
-	(Blu-Invoke $Device "SyncStatus").SyncStatus
+	Blu-Invoke -Device $Device -Path SyncStatus
 }
 function Blu-Status()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device,
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device,
 		
 		[Nullable[uint32]] $Timeout
 	)
@@ -104,7 +128,7 @@ function Blu-Status()
 	if ($Timeout -ne $null) {
 		$Options['timeout'] = $Timeout
 	}
-	(Blu-Invoke $Device "Status" $Options).status
+	Blu-Invoke -Device $Device -Path Status -Options $Options
 }
 
 #
@@ -115,26 +139,29 @@ function Blu-State()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device
 	)
-	(Blu-Status $Device).status.state
+	(Blu-Status -Device $Device).state
 }
 function Blu-CanSeek()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device
 	)
-	(Blu-Status $Device).status.canSeek
+	(Blu-Status -Device $Device).canSeek
 }
 function Blu-Play()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device,
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device,
 		[Nullable[uint32]] $Item,
 		[Nullable[uint32]] $Seek
 	)
@@ -148,14 +175,15 @@ function Blu-Play()
 	if ($Seek -ne $null) {
 		$Options['seek'] = $Seek
 	}
-	(Blu-Invoke $Device "Play" $Options).state
+	Blu-Invoke -Device $Device -Path Play -Options $Options
 }
 function Blu-PlayUrl()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device,
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device,
 		
 		[Parameter(Mandatory=$True)]
 		$Url,
@@ -177,141 +205,227 @@ function Blu-PlayUrl()
 	# and an HTTP Post request with parameter "url=" containing the actual media URL will trigger
 	# the playback.
 	if ($LegacyApi) {
-		Blu-Invoke $Device "playurl" @{'url'=$Url} -Method 'Post' -WebApi
+		Blu-Invoke -Device $Device -Path playurl -Options @{ url = $Url } -Method Post -WebApi
 	} else {
-		Blu-Invoke $Device "Play" @{'url'=$Url}	
+		Blu-Invoke -Device $Device -Path Play -Options @{ url = $Url }
 	}	
 }
 function Blu-Resume()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device
 	)
 	# TODO: Same as Blu-Play, but always from current position - so just resume from pause state.
 	#       Should have identical effect as "Blu-Pause -Toggle", assuming current state is paused!
-	(Blu-Invoke $Device "Play").state
+	Blu-Invoke -Device $Device -Path Play
 }
 function Blu-Pause()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device,
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device,
 		
-		[switch]$Toggle
+		[switch] $Toggle
 	)
 	if ($Toggle)
 	{
-		# TODO: Return information of what is the resulting state (play or pause)!
-		(Blu-Invoke $Device "Pause" @{'toggle' = 1}).state
+		Blu-Invoke -Device $Device -Path Pause -Options @{ toggle = 1 }
 	}
 	else
 	{
-		(Blu-Invoke $Device "Pause").state
+		Blu-Invoke -Device $Device -Path Pause
 	}
 }
 function Blu-Stop()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device
 	)
 	# Implementation note: Official app only supports play and pause,
 	# not stop. When device is activated from "vacation mode" it is
 	# in the stopped state.
-	(Blu-Invoke $Device "Stop").state
+	Blu-Invoke -Device $Device -Path Stop
 }
 function Blu-Skip()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device
 	)
 	# TODO: Are there parameters to be able to skip more than one entry?
-	(Blu-Invoke $Device "Skip").id
+	Blu-Invoke -Device $Device -Path Skip
 }
 function Blu-Back()
 {
-	[CmdletBinding(SupportsShouldProcess=$True)] param()
+	[CmdletBinding(SupportsShouldProcess=$True)]
+	param(
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device
+	)
 	# TODO: Are there parameters to be able to move back more than one entry?
-	(Blu-Invoke "Back").id
+	Blu-Invoke -Device $Device -Path Back
 }
 function Blu-Playqueue()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device,
-		[Nullable[uint32]] $Start,
-		[Nullable[uint32]] $End
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device,
+		[Nullable[uint32]] $StartPosition,
+		[Nullable[uint32]] $EndPosition
 	)
-	# Arguments Start and End are optional, default is to return all items.
-	# Start and End is range of a subset, from given start index to (and including)
-	# given end index, where the indexes are zero indexed. For example
-	# Start=0 and End=0 gives a single, the first, entry of the queue.
+	# Arguments StartPosition and EndPosition are optional zero-based indices into the playqueue,
+	# giving a range including the specified start/end. For example Start=0 and End=0 gives a single,
+	# the first, entry of the queue. Default start is 0 and end is last entry, without specifying
+	# any of them all items will be returned.
 	$Options = @{}
-	if ($Start -ne $null) {
-		$Options['start'] = $Start
+	if ($StartPosition -ne $null) {
+		$Options['start'] = $StartPosition
 	}
-	if ($End -ne $null) {
-		$Options['end'] = $End
+	if ($EndPosition -ne $null) {
+		$Options['end'] = $EndPosition
 	}
-	(Blu-Invoke $Device "Playlist" $Options).playlist
+	Blu-Invoke -Device $Device -Path Playlist -Options $Options
+}
+function Blu-PlayqueueListTracks()
+{
+	[CmdletBinding(SupportsShouldProcess=$True)]
+	param(
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device,
+		[Nullable[uint32]] $StartPosition,
+		[Nullable[uint32]] $EndPosition
+	)
+	(Blu-PlayqueueList -Device $Device -StartPosition $StartPosition -EndPosition $EndPosition).song
+}
+function Blu-PlayqueueDeleteTrack()
+{
+	[CmdletBinding(SupportsShouldProcess=$True)]
+	param(
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device,
+		[Parameter(Mandatory=$True)]
+		[uint32] $Position
+	)
+	Blu-Invoke -Device $Device -Path Delete -Options ${ id = $Position }
+}
+function Blu-PlayqueueMoveTrack()
+{
+	[CmdletBinding(SupportsShouldProcess=$True)]
+	param(
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device,
+		[Parameter(Mandatory=$True)]
+		[uint32] $FromPosition,
+		[Parameter(Mandatory=$True)]
+		[uint32] $ToPosition
+	)
+	Blu-Invoke -Device $Device -Path Move -Options ${ old = $FromPosition; new = $ToPosition }
 }
 function Blu-PlayqueueSave()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device,
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device,
 		
 		[Parameter(Mandatory=$True)]
 		[string] $Name
 	)
 	# Save current playqueue as new playlist
-	Blu-Invoke $Device "Save" @{'name'=$Name}
+	Blu-Invoke -Device $Device -Path Save -Options @{ name = $Name }
 }
 function Blu-PlayqueueClear()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device
 	)
-	Blu-Invoke $Device "Clear"
+	Blu-Invoke -Device $Device -Path Clear
 }
 function Blu-Volume()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device,
-		
-		[ValidateRange(0, 100)] [Nullable[byte]] $SetPercent
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device
 	)
-	# Argument SetPercent is optional, default is to return current volume in percent and dB.
-	# SetPercent specifies new volume, always in percent, to change to.
-	# Implementation note: The response when changing volume indicates new volume in percent,
-	# but not dB. Current volume in percent (but not dB) can also be returned from the Status
-	# and SyncStatus methods.
-	if ($SetPercent -ne $null) {
-		$Options = @{'level'=$SetPercent}
-		$Response = Blu-Invoke $Device "Volume" $Options
-		[pscustomobject]@{'percent'=$Response.volume.'#text'; 'db'=$Response.volume.db}
-	} else {
-		(Blu-Invoke $Device "Volume" $Options).volume
-	}
+	Blu-Invoke -Device $Device -Path Volume
+}
+function Blu-VolumeSetPercent()
+{
+	[CmdletBinding(SupportsShouldProcess=$True)]
+	param(
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device,
+		[ValidateRange(0, 100)] [byte] $Value, # Percent of configured available volume range for the player
+		[switch] $TellSlaves
+	)
+	Blu-Invoke -Device $Device -Path Volume -Options @{ level = $Value; tell_slaves = [int]$TellSlaves.IsPresent }
+}
+function Blu-VolumeSetDb()
+{
+	[CmdletBinding(SupportsShouldProcess=$True)]
+	param(
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device,
+		[ValidateRange(-80, 0)] [int16] $Value, # Limited by configured available volume range for the player, default between -80 and 0.
+		[switch] $TellSlaves
+	)
+	Blu-Invoke -Device $Device -Path Volume -Options @{ abs_db = $Value; tell_slaves = [int]$TellSlaves.IsPresent }
+}
+function Blu-VolumeAdjust()
+{
+	[CmdletBinding(SupportsShouldProcess=$True)]
+	param(
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device,
+		[byte] $Value = 2, # Relative value in dB, negative is decrease, positive is increase.
+		[switch] $TellSlaves
+	)
+	Blu-Invoke -Device $Device -Path Volume -Options @{ db = $Value; tell_slaves = [int]$TellSlaves.IsPresent }
+}
+function Blu-VolumeMute()
+{
+	[CmdletBinding(SupportsShouldProcess=$True)]
+	param(
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device,
+		[switch] $Unmute,
+		[switch] $TellSlaves
+	)
+	Blu-Invoke -Device $Device -Path Volume -Options @{ mute = [int]!$Unmute.IsPresent; tell_slaves = [int]$TellSlaves.IsPresent }
 }
 function Blu-Repeat()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device,
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device,
 		
 		[ValidateSet('Playqueue', 'Track', 'Off')] $Mode
 	)
@@ -322,17 +436,18 @@ function Blu-Repeat()
 	if ($Mode) {
 		$ModeCaseSensitive = $Modes -eq $Mode | Select-Object -First 1
 		$State = $Modes.IndexOf($ModeCaseSensitive)
-		$Options = @{'state' = $State }
+		$Options = @{ state = $State }
 	}
-	$Response = Blu-Invoke $Device "Repeat" $Options
+	$Response = Blu-Invoke -Device $Device -Path Repeat -Options $Options
 	$Modes[$Response.playlist.repeat]
 }
 function Blu-Shuffle()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device,
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device,
 		
 		[ValidateSet('Off', 'On')] $Mode
 	)
@@ -344,10 +459,10 @@ function Blu-Shuffle()
 	if ($Mode) {
 		$ModeCaseSensitive = $Modes -eq $Mode | Select-Object -First 1
 		$State = $Modes.IndexOf($ModeCaseSensitive)
-		$Response = Blu-Invoke $Device "Shuffle" @{'state' = $State }
+		$Response = Blu-Invoke -Device $Device -Path Shuffle -Options @{ state = $State }
 		$Modes[$Response.playlist.shuffle]
 	} else {
-		$Response = Blu-Status $Device
+		$Response = Blu-Status -Device $Device
 		$Modes[$Response.status.shuffle]
 	}
 }
@@ -360,14 +475,15 @@ function Blu-PlayerGroupAdd()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device,
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device,
 		[string] $GroupName,
 		[string] $SlaveIP,
 		[ValidateSet('MultiPlayer', 'StereoPair', 'HomeTheater')] [string] $GroupType,
 		[string] $SlaveType = 'right'
 	)
-	$Options = @{'slave' = $SlaveIP; 'group' = $GroupName }
+	$Options = @{ slave = $SlaveIP; group = $GroupName }
 	if ($GroupType -eq 'StereoPair') {
 		if ($SlaveType -eq 'right') {
 			$Options['channelMode'] = 'left'
@@ -378,21 +494,22 @@ function Blu-PlayerGroupAdd()
 		} else {
 			throw "SlaveType in StereoPair must be either 'left' or 'right'"
 		}
-		(Blu-Invoke $Device "AddSlave" $Options).addSlave.slave
+		Blu-Invoke -Device $Device -Path AddSlave -Options $Options
 	} elseif ($GroupType -eq 'HomeTheater') {
 		throw "HomeTheater groups not supported yet"
 	}
-	(Blu-Invoke $Device "AddSlave" $Options).addSlave.slave
+	Blu-Invoke -Device $Device -Path AddSlave -Options $Options
 }
 function Blu-PlayerGroupRemove()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device,
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device,
 		[string] $SlaveIP
 	)
-	Blu-Invoke $Device "RemoveSlave" @{'slave' = $SlaveIP} | Out-Null
+	Blu-Invoke -Device $Device -Path RemoveSlave -Options @{ slave = $SlaveIP } | Out-Null
 }
 
 #
@@ -403,61 +520,45 @@ function Blu-Services()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device
 	)
-	(Blu-Invoke $Device "Services").services
+	(Blu-Invoke -Device $Device -Path Services).service
 }
 function Blu-Radios()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device
 	)
-	# Implementation notes:
 	# Request without service parameter defaults to "service=TuneIn".
-	# Implemented request with service parameter "service=Capture"
-	# as a separate moethod: Blu-Sources.
-	(Blu-Invoke $Device "RadioBrowse").radiotime.item
-}
-function Blu-RadioAddPreset()
-{
-	[CmdletBinding(SupportsShouldProcess=$True)]
-	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device,
-
-		[Parameter(Mandatory=$True)]
-		$Name,
-
-		[Parameter(Mandatory=$True)]
-		$Url,
-		
-		$Service = "TuneIn"
-	)
-	# Add custom stream URL as a radio preset (custom station) in TuneIn.
-	# See also Blu-PlayUrl.
-	(Blu-Invoke $Device "RadioAddPreset" @{'name'=$Name; 'url'=$Url; 'service'=$Service}).favorite
+	# With service=Capture we get other enabled/connected inputs, this request
+	# is performed from separate method: Blu-Sources.
+	(Blu-Invoke -Device $Device -Path RadioBrowse).item
 }
 function Blu-RadioPresets()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device,
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device,
 		
 		$Service = "TuneIn"
 	)
 	# TODO: We just want the individual items, not the strange category elements, but as plain "objects"!
-	(Blu-Invoke $Device "RadioPresets" @{'service'=$Service}).SelectNodes("/radiotime/category/item")
+	(Blu-Invoke -Device $Device -Path RadioPresets -Options @{ service = $Service }).SelectNodes("/radiotime/category/item")
 }
 function Blu-RadioAddPreset()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device,
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device,
 
 		[Parameter(Mandatory=$True)]
 		$Name,
@@ -469,75 +570,82 @@ function Blu-RadioAddPreset()
 	)
 	# Add custom stream URL as a radio preset (custom station) in TuneIn.
 	# See also Blu-PlayUrl.
-	(Blu-Invoke $Device "RadioAddPreset" @{'name'=$Name; 'url'=$Url; 'service'=$Service}).favorite
+	(Blu-Invoke -Device $Device -Path RadioAddPreset -Options @{ name = $Name; url = $Url; service = $Service }).favorite
 }
 function Blu-RadioDeletePreset()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device,
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device,
 	
 		$Service = "TuneIn"
 	)
 	# TODO: Seems there is a RadioDeletePreset request, but have not yet found out
 	# what parameters to use to identify the preset to delete!
-	#(Blu-Invoke $Device "RadioDeletePreset" @{'name'=$Name; 'url'=$Url; 'service'=$Service}).favorite
+	#(Blu-Invoke -Device $Device -Path RadioDeletePreset @{'name'=$Name; 'url'=$Url; 'service'=$Service}).favorite
 }
 function Blu-Sources()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device
 	)
-	# Request without service parameter defaults to "service=TuneIn",
-	# with service=Capture we get other inputs (which are enabled/connected).
-	(Blu-Invoke $Device "RadioBrowse" ${'service' = 'Capture'}).radiotime.item
+	# Request with option service=Capture returns enabled/connected inputs.
+	# Requests without service parameter defaults to "service=TuneIn", this request
+	# is performed from separate method: Blu-Radios.
+	(Blu-Invoke -Device $Device -Path RadioBrowse -Options @{ service = Capture }).item
 }
 function Blu-Playlists()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device,
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device,
 		$Service = "LocalMusic"
 	)
 	# Request without service parameter defaults to "service=LocalMusic"
-	(Blu-Invoke $Device "Playlists" @{'service'=$Service}).playlists.name
+	(Blu-Invoke -Device $Device -Path Playlists -Options @{ service = $Service }).name
 }
 function Blu-Presets()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device
 	)
-	(Blu-Invoke $Device "Presets").presets.preset
+	(Blu-Invoke -Device $Device -Path Presets).preset
 }
 function Blu-SwitchToPreset()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device,
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device,
 		
 		[Parameter(Mandatory=$True)]
-		[uint32]$Id
+		[byte] $Id
 	)
 	# TODO/Implementation notes:
 	# Response is different depending on the type of preset,
 	# e.g. for TuneIn it retuns the state value "stream",
 	# while for a Tidal playlist it returns a different xml response
 	# indicating the service and number of entries loaded.
-	Blu-Invoke $Device "Preset" @{'id'=$Id}
+	Blu-Invoke -Device $Device -Path Preset -Options @{ id = $Id }
 }
 function Blu-SwitchToPlaylist()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device
 	)
 	# TODO:
 	# http://192.168.1.38:11000/Genres?service=LocalMusic (Library)
@@ -546,8 +654,9 @@ function Blu-SwitchToRadio()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device
 	)
 	# TODO:
 	#http://192.168.1.38:11000/RadioBrowse?service=TuneIn (TuneIn Radio)
@@ -561,8 +670,9 @@ function Blu-SwitchSource()
 	# http://192.168.1.38:11000/Play?url=Capture%3Abluez%3Abluetooth&preset_id&image=/images/BluetoothIcon.png (Bluetooth Input)
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device,
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device,
 		
 		[Parameter(Mandatory=$True)]
 		[ValidateSet('Optical', 'Bluetooth', 'Spotify', 'RadioParadise')] [string] $Source
@@ -585,63 +695,69 @@ function Blu-SwitchSource()
 		$ServicePath = 'Capture:RadioParadise:http://stream-tx3.radioparadise.com/aac-320'
 		$Image = '/images/ParadiseRadioIcon.png'
 	}
-	Blu-Invoke $Device "Play" @{'url' = $ServicePath; 'preset_id' = ''; 'image' = $Image }
+	Blu-Invoke -Device $Device -Path Play -Options @{ url = $ServicePath; preset_id = ''; image = $Image }
 }
 function Blu-Search()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device,
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device,
 		
 		[Parameter(Mandatory=$True)] $Query,
 		$Service = "LocalMusic"
 	)
 	# Request without service parameter defaults to "service=LocalMusic"
-	(Blu-Invoke $Device "Search" @{'expr'=$Query; 'service'=$Service}).search
+	Blu-Invoke -Device $Device -Path Search -Options @{ expr = $Query; service = $Service }
 }
 function Blu-RadioSearch()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device,
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device,
 		
 		[Parameter(Mandatory=$True)] $Query,
 		$Service = "TuneIn"
 	)
 	# Request without service parameter defaults to "service=LocalMusic"
-	(Blu-Invoke $Device "RadioSearch" @{'expr'=$Query; 'service'=$Service}).radiotime.item
+	(Blu-Invoke -Device $Device -Path RadioSearch -Options @{ expr = $Query; service = $Service }).item
 }
 function Blu-Genres()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device,
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device,
 		$Service = "LocalMusic"
 	)
 	# Request without service parameter defaults to "service=LocalMusic"
-	(Blu-Invoke $Device "Genres" @{'service'=$Service}).genres.genre
+	(Blu-Invoke -Device $Device -Path Genres -Options @{ service = $Service }).genre
 }
 function Blu-Artwork()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device,
+		$Service = "LocalMusic"
 	)
 	# TODO
-	(Blu-Invoke $Device "Artwork" @{'service'="LocalMusic"; 'artist' = "?"; 'album' = "?"}).artwork
+	Blu-Invoke -Device $Device -Path Artwork -Options @{ service = $Service; artist = "?"; album = "?"}
 }
 function Blu-Diagnostics()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device
 	)
-	Blu-Invoke $Device "diag" @{'print'=1} -WebApi
+	Blu-Invoke -Device $Device -Path diag -Options @{ print = 1 } -WebApi
 }
 
 #
@@ -652,36 +768,40 @@ function Blu-RoomName()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device
 	)
 	# TODO: Can be updated as well, but have not implemented that here yet.
-	(Blu-SyncStatus $Device).name
+	(Blu-SyncStatus -Device $Device).name
 }
 function Blu-ModelName()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device
 	)
-	(Blu-SyncStatus $Device).modelName
+	(Blu-SyncStatus -Device $Device).modelName
 }
 function Blu-Audiomodes()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device
 	)
-	(Blu-Invoke $Device "audiomodes").audiomode
+	(Blu-Invoke -Device $Device -Path audiomodes).audiomode
 }
 function Blu-BluetoothSetting()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device,
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device,
 		
 		[ValidateSet('manual', 'automatic', 'guest', 'off')] [string] $Mode
 	)
@@ -690,69 +810,76 @@ function Blu-BluetoothSetting()
 	if ($Mode) {
 		$ModeCaseSensitive = $Modes -eq $Mode | Select-Object -First 1
 		$State = $Modes.IndexOf($ModeCaseSensitive)
-		$Modes[(Blu-Invoke $Device "audiomodes" @{'bluetoothAutoplay'=$State} -Method 'Post').audiomode.bluetoothAutoplay]
+		$Modes[(Blu-Invoke -Device $Device -Path audiomodes -Options @{ bluetoothAutoplay = $State } -Method Post).audiomode.bluetoothAutoplay]
 	} else {
-		$Modes[(Blu-Audiomodes $Device).bluetoothAutoplay]
+		$Modes[(Blu-Audiomodes -Device $Device).bluetoothAutoplay]
 	}
 }
 function Blu-OutputMode()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device,
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device,
 		
 		[ValidateSet('default', 'left', 'right')] [string] $Mode
 	)
 	# Argument Mode is optional, default is to return current state.
 	if ($Mode) {
-		(Blu-Invoke $Device "audiomodes" @{'channelMode'=$Mode.ToLower()} -Method 'Post').audiomode.channelMode
+		(Blu-Invoke -Device $Device -Path audiomodes -Options @{ channelMode = $Mode.ToLower() } -Method Post).audiomode.channelMode
 	} else {
-		(Blu-Audiomodes $Device).channelMode
+		(Blu-Audiomodes -Device $Device).audiomode.channelMode
 	}
 }
 function Blu-Brightness()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device,
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device,
 		
 		[ValidateSet('default', 'dim', 'off')]
 		[string] $Brightness
 	)
-	Blu-Invoke $Device "ledbrightness" @{'brightness'=$Brightness} -Method 'Post' -WebApi
+	Blu-Invoke -Device $Device -Path ledbrightness -Options @{ brightness = $Brightness } -Method Post -WebApi
 }
 function Blu-Sleep()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device,
+
 		[switch] $Set
 	)
 	# To change sleep time, it must be invoked with argument -Set, and for each
 	# time it steps through the settings: 15, 30, 45, 60, 90 minutes, and off. 
 	if ($Set) {
-		(Blu-Invoke $Device "Sleep").sleep
+		(Blu-Invoke -Device $Device -Path Sleep).sleep
 	} else {
-		(Blu-Status $Device).status.sleep
+		(Blu-Status -Device $Device).sleep
 	}
 }
 function Blu-Alarms()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device
 	)
-	(Blu-Invoke $Device "Alarms").alarms.alarm
+	(Blu-Invoke -Device $Device -Path Alarms).alarm
 }
 function Blu-AlarmSet()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device,
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device,
 		
 		[Nullable[uint32]] $Id, # Id of existing alarm to modify, skip if creating new!
 		$Enable = 1, # Always 1 from GUI, not sure if setting it to 0 will disable it?
@@ -769,42 +896,53 @@ function Blu-AlarmSet()
 	)
 	# TODO: Untested and needs refactoring!
 	$Options = @{
-		'enable' = 1
-		'hour' = $Hour
-		'minute' = $Minute
-		'days' = $Days
-		'duration' = $Timeout
-		'volume' = $Volume
-		'fadeIn' = $FadeIn
-		'sound' = $Sound
-		'image' = $Image
-		'url' = $Url
-		'tz' = $TimeZone
+		enable = 1
+		hour = $Hour
+		minute = $Minute
+		days = $Days
+		duration = $Timeout
+		volume = $Volume
+		fadeIn = $FadeIn
+		sound = $Sound
+		image = $Image
+		url = $Url
+		tz = $TimeZone
 	}
 	if ($Id -ne $null) {
 		$Options['id'] = $Id
 	}
-	(Blu-Invoke $Device "Alarms" $Options).alarms.alarm
+	(Blu-Invoke -Device $Device -Path Alarms -Options $Options).alarm
 }
 function Blu-AlarmDelete()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device,
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device,
 		
 		[Parameter(Mandatory=$True)]
 		$Id
 	)
-	$Options = @{'id'=$Id;'delete'=1}
-	(Blu-Invoke $Device "Alarms" $Options).alarms.alarm
+	(Blu-Invoke -Device $Device -Path Alarms -Options @{ id = $Id; delete = 1 }).alarm
+}
+function Blu-Doorbell()
+{
+	[CmdletBinding(SupportsShouldProcess=$True)]
+	param(
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device
+	)
+	Blu-Invoke -Device $Device -Path Doorbell -Options @{ play = 1 }
 }
 function Blu-Reboot()
 {
 	[CmdletBinding(SupportsShouldProcess=$True)]
 	param(
-		[Parameter(Mandatory=$True, HelpMessage="The hostname or IP address of the BluOS device to control")]
-		[string] $Device,
+		[Parameter(HelpMessage='The hostname or IP address of the BluOS device to control')]
+		[ValidateNotNullorEmpty()]
+		[string] $Device = $Device,
 		
 		[switch] $Force
 	)
@@ -816,6 +954,6 @@ function Blu-Reboot()
 	# stand-alone web interface, without the navigation menu on top), and an HTTP Post request with
 	# parameter "yes" will trigger the actual reboot.
 	if ($Force -or $PSCmdlet.ShouldContinue("Are you sure you want to reboot player ${Device}", "Confirm reboot")) {
-		Blu-Invoke $Device "reboot" @{'noheader'=1; 'yes'=1} -Method 'Post' -WebApi
+		Blu-Invoke -Device $Device -Path reboot -Options @{ noheader = 1; yes = 1 } -Method Post -WebApi
 	}
 }
