@@ -496,7 +496,7 @@ function Blu-PlayerGroupAdd()
 		}
 		Blu-Invoke -Device $Device -Path AddSlave -Options $Options
 	} elseif ($GroupType -eq 'HomeTheater') {
-		throw "HomeTheater groups not supported yet"
+		throw "HomeTheater groups not implemented yet - see README.md"
 	}
 	Blu-Invoke -Device $Device -Path AddSlave -Options $Options
 }

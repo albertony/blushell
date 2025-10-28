@@ -63,7 +63,7 @@ url identifier used in BluOS, e.g. `Capture:bluez:bluetooth` or `Tidal​:radio:
 (the latter from the trackstationid attribute of /Songs response from Tidal service).
 
 The [response](Samples/Play.xml) indicates the resulting state, which is also
-reported by /Status. On success the state should be `play`.
+reported by [/Status](#status). On success the state should be `play`.
 
 #### Additional notes regarding url playback
 
@@ -85,12 +85,12 @@ Without parameters it will suspend playback at the current position, if it is
 currently playing.
 
 The [response](Samples/Pause.xml) indicates the resulting state, which is also
-reported by /Status. On success the state should be `pause`.
+reported by [/Status](#status). On success the state should be `pause`.
 
 Optional parameter `toggle` can be set to integer value 1 to toggle between play
 and pause states. The response indicates the resulting state, which is also
-reported by /Status. On success the state could be either [`play`](Samples/Pause_Toggle1.xml)
-or [`pause`](Samples/Pause_Toggle2.xml).
+reported by [/Status](#status). On success the state could be either
+[`play`](Samples/Pause_Toggle1.xml) or [`pause`](Samples/Pause_Toggle2.xml).
 
 ### /Stop
 
@@ -99,7 +99,7 @@ operations, not stop. When device is activated from "vacation mode" it is in the
 stopped state.
 
 The [response](Samples/Stop.xml) indicates the resulting state, which is also
-reported by /Status. On success the state should be `stop`.
+reported by [/Status](#status). On success the state should be `stop`.
 
 ### /Skip
 
@@ -127,13 +127,13 @@ Optional parameter `state` can be specified to modify, with an integer value
 indicating the repeat mode to set. The [response](Samples/Repeat_modify.xml) indicates
 the resulting state.
 
-The current state can be retrieved from the /Status request as well.
+The current state can be retrieved from the [/Status](#status) request as well.
 
 ### /Shuffle
 
 Without parameters this does *not* (just) return the current state, but it turns
 shuffle off! To get the current state without modifying one must fetch it from
-the /Status request.
+the [/Status](#status) request.
 
 The [response](Samples/Shuffle.xml) contains the `id` of the current play queue,
 and the current state of the repeat option (although the current state may not be
@@ -163,23 +163,25 @@ with parameter `db` and a relative value as a positive or negative number (typic
 value 2) which works similar to classical volume up/down buttons. Mute can also be
 controlled using parameter `mute`.
 
-Note that to control the volume for player groups as a whole, you will have to
-send the request to the main player device and also include the parameter `tell_slaves`
-set to value `1`. This does not apply to fixed groups, called zone in /SyncStatus
-response, where any volume change applies to the entire group.
+To control the volume for [player groups](#player-groups), you send the request
+to the primary player device and can also include the parameter `tell_slaves` set
+to value `0` or `1` depending if you want to control the volume for the entire group
+as a whole or not (default is `1` for fixed groups). The volume for secondary players
+in the group can adjusted individually with a separate [/SlaveVolume](#slavevolume)
+endpoint.
 
 The current volume in percent (`volume`) and dB (`db`, previously `outlevel`) can
-be retrieved from the /SyncStatus request as well, and in percent also from the
-/Status request.
+be retrieved from the [/SyncStatus](#syncstatus) request as well, and in percent
+also from the [/Status](#status) request.
 
 ### /Playlist
 
 Without parameters the [response](Samples/Playlist.xml) describes the current
 play queue. It is identified by a `name` and `id`, and a list of entries (`song`)
 with increasing `id` starting from 0. The entry ids are referenced in the response
-from the /Skip and /Prev requests. The playlist id is also referenced from
-other requests working on the play queue, and it seems to be an integer that is
-incremented whenever the playlist is changed.
+from the [/Skip](#skip) and [/Back](#back) requests. The playlist id is also
+referenced from other requests working on the play queue, and it seems to be an
+integer that is incremented whenever the playlist is changed.
 
 Optional parameters `start` and/or `end` can be specified to return
 an excerpt of the play queue. The values refer to `id` of playlist
@@ -189,7 +191,7 @@ will give a single, the first, item).
 ### /Clear
 
 Empties the current play queue, and returns the same [response](Samples/Clear.xml)
-as a request to /Playlist would do: An empty `playlist` element but
+as a request to [/Playlist](#playlist) would do: An empty `playlist` element but
 an incremented `id`.
 
 ### /Save
@@ -218,9 +220,9 @@ Optional argument `playnow` can be set to value 1 to trigger playback.
 
 BluOS supports grouping players in different modes:
 
-- Multi-player group
-- Stereo pair
-- Home theater group
+- Multi-Player Group
+- Stereo Pair
+- Home Theater Group
 
 A group has one primary player, also known as main, and one or many secondary
 players, also known as slaves. The primary player represents the group, and
@@ -234,11 +236,16 @@ In the official app there are two main roads to creating a group:
 by clicking `+` symbol on players to add to current player's group,
 or by clicking the "Group all" button. These will always be
 multi-player groups, and they will get an auto-generated name as a
-combination of the individual names of the players.
+combination of the individual names of the players. This is also referred
+to as standard multiroom grouping in official documentation.
 - Fixed groups menu, where you can select any of the supported
 group modes, get help configuring them (e.g. pick which one is left
 and which is right in a stereo pair, by playing a sound on each of them),
 and also give the group a custom name.
+
+Note that each device can only be part of a single group at a time.
+
+Fixed groups are called "zone" in the [/SyncStatus](#syncstatus) response.
 
 ### /AddSlave
 
@@ -254,27 +261,39 @@ default 11000).
 Optional parameter `group` can be specified to give the group a name,
 by default it will be generated from the names of the devices.
 
-This will set up a multi-player group. To set up a stereo pair
-one must also specify parameters `channelMode` and `slaveChannelMode`,
+The default is to create a multi-player group. To set up a stereo pair
+you must also specify parameters `channelMode` and `slaveChannelMode`,
 one of them with value `left` and the other one with value `right`.
 (Multi-player group have implicit value `default` for both
 `channelMode` and `slaveChannelMode`).
 
-To set up Home theater group, specify parameters `channelMode` and
-`slaveChannelMode`, with values `front`, `side_left` or `side_right`.
-When grouping multiple secondary players with comma-separated `slaves`,
-you must specify a mode for each of them with a comma-separated value in
-`slaveChannelMode` as well. The primary player will typically be a
-CINEMA, SOUNDBAR or POWERNODE or SOUNDBAR device in front, set in channel
-mode `front`, and then a pair of FLEX devices in rear, set in slave channel
-modes `side_left` and `side_right`. (TODO: Not sure whan slave channel mode
-to use if you setup POWERNODE stereo setup as rear, maybe there is a `rear`
-mode then?). You can also configure the listening position using parameter
-`distance` for the primary, and `slaveDistance` for the secondary, which
-can also be a comma-separated list if more than one secondary.
+To set up a home theater group, specify parameters `channelMode` and
+`slaveChannelMode`, with values `front`, `side`, `side_left` or `side_right`.
+When grouping multiple secondary players with comma-separated `slaves`, you
+must specify a mode for each of them with a comma-separated value in
+`slaveChannelMode` as well. A home theater group requires a CINEMA, SOUNDBAR
+or POWERNODE device in front, i.e. configured with channel mode `front`, and
+this will typically be the primary device of the group. Then you can use a pair
+of for example FLEX devices as rear, configured with slave channel modes
+`side_left` and `side_right`, or you can use a POWERNODE stereo as rear,
+configured with slave channel mode `side`. You can also configure the listening
+position using parameter `distance` for distance from your listening position to
+the primary, and parameter `slaveDistance` for distance to the secondary, the
+latter a comma-separated list if more than one secondary. Distances are in meters,
+and may contain decimals, e.g. `1.2`.
 
 The [response](Samples/AddSlave.xml) contains the address and port numbers
 of slaves added.
+
+### /SlaveVolume
+
+Volume is controlled via the primary device. The regular [/Volume](#volume)
+endpoint controls the volume for the player group as a whole by default. One can
+also control volumes of the devices individually, by using the [/Volume](#volume)
+endpoint with parameter `tell_slaves` set to value `0` to control the volume
+of the primary device, and then control volumes of specific secondary devices
+using a separate /SlaveVolume endpoint with parameter `slave`, and optionally `port`,
+as well as the same parameters to specify the volume value, such as `db`.
 
 ### /RemoveSlave
 
@@ -327,7 +346,7 @@ and [radio preset](Samples/Preset_radio.xml).
 
 ### /SetPreset
 
-Without parameters it lists existing presets, identical to /Presets.
+Without parameters it lists existing presets, identical to [/Presets](#presets).
 
 To modify a preset the preset number must be specified in parameter `id`.
 If no other parameters are specified it will remove any existing presets with
@@ -341,12 +360,12 @@ parameter `volume` must specify the volume in percent. There is also a
 parameter `image`.
 
 In all variants the [response](Samples/Presets.xml) is the list of current
-presets, as also returned by /Presets.
+presets, as also returned by [/Presets](#presets).
 
 ### /Playlists
 
-Returns available playlists. Note /Playlist (without ending s) is similar,
-but not directly related as it returns the current play queue.
+Returns available playlists. Note [/Playist](#playlist) (without ending s) is
+similar, but not directly related as it returns the current play queue.
 
 Without parameters it returns local device playlists, as if parameter `service`
 is set to `LocalMusic`. Playlists from other services can be listed by setting
@@ -359,11 +378,11 @@ At least for Tidal, the default is to return your personal playlists. Other
 compiled playlists can be retrieved by adding various parameters:
 
 - `category` : `new`, `recommended`, `local`, `FAVOURITES`
-- `genre` : `Local`, `Pop`, `Rock`, etc (genreid of items returned by /Genres).
-- `mood` : `relax`, `party`, `workout`, etc (genreid of items returned by /Genres
+- `genre` : `Local`, `Pop`, `Rock`, etc (genreid of items returned by [/Genres](#genres)).
+- `mood` : `relax`, `party`, `workout`, etc (genreid of items returned by [/Genres](#genres)
   with `category=moods`)
 
-Playlists can be created by /Save, /AddToPlaylist etc..
+Playlists can be created by [/Save](#save), [/AddToPlaylist](#addtoplaylist) etc..
 
 TODO...
 
@@ -417,10 +436,10 @@ Sample [default response](Samples/Genres.xml),
 
 For Tidal navigation the parameter `service` must be set to `Tidal`.
 In addition one need to specify one or more parameters for navigating
-into the structure, similar to /Playlists:
+into the structure, similar to [/Playlists](#playlists):
 
 - `category` : `new`, `rising`, `recommended`, `top`, `local`, `FAVOURITES`
-- `genre` : `Local`, `Pop`, `Rock`, etc (genreid of items returned by /Genres).
+- `genre` : `Local`, `Pop`, `Rock`, etc (genreid of items returned by [/Genres](#genres)).
 
 For /Songs one can specify attribute `playlistid` to list all songs
 in a specified playlist, or `albumid` to list all songs in an album.
@@ -435,13 +454,13 @@ grouped on artist, album and song.
 Sample [default response](Samples/Search_Tidal_expr_Bon.xml),
 [service=Tidal response](Samples/Search_expr_Bon.xml).
 
-Another way of searching is through /Browse (see above).
+Another way of searching is through [/Browse](#browse).
 
 ### /RadioSearch
 
-To search for radio stations, using a similar syntax as /Search: Parameter `expr`
-with the search string, and `service` to identify the service - here TuneIn is
-the default service.
+To search for radio stations, using a similar syntax as [/Search](#search):
+Parameter `expr` with the search string, and `service` to identify the
+service - here TuneIn is the default service.
 
 Sample [response](Samples/RadioSearch_expr_Bon.xml).
 
@@ -481,10 +500,10 @@ which defines number of seconds, and `etag`, which is an
 [HTTP entity tag](https://en.wikipedia.org/wiki/HTTP_ETag), are
 used for 'long polling', keeping the request open until the responsive is
 different from the previous response (using the etag for comparison) or until
-the timeout has been reached. /SyncStatus should be polled if only the name,
-volume and grouping status of a player is of interest. /Status should be polled
-if current playback status is needed. The official desktop client application
-sends these requests regularly (every few seconds).
+the timeout has been reached. [/SyncStatus](#syncstatus) should be polled if
+only the name, volume and grouping status of a player is of interest. /Status
+should be polled if current playback status is needed. The official desktop
+client application sends these requests regularly (every few seconds).
 
 (The official desktop client does not send "If-None-Match" headers, which is
 normally used in Etag concurrency control Tidal does, it is implemented
@@ -497,7 +516,7 @@ Sample [response](Samples/Status.xml),
 
 ### /SyncStatus
 
-Used in combination with /Status to keep multiple controllers synchronized.
+Used in combination with [/Status](#status) to keep multiple controllers synchronized.
 
 Sample [response](Samples/SyncStatus.xml).
 
@@ -505,8 +524,8 @@ TODO: Have not yet dug into exactly how the synchronization mechanism works..
 
 ### /Settings
 
-Similar to /Services, this gives seem to return a more or less complete
-description of the navigation paths of settings in the user interface.
+Similar to [/Services](#services), this gives seem to return a more or less
+complete description of the navigation paths of settings in the user interface.
 A lot of API details can be found by inspecting this!
 
 Adding parameter `expand` with value 1 adds more details.
@@ -525,7 +544,7 @@ TODO: More details...
 Web API endpoint /ui has some internal information in different sub paths.
 
 Endpoint /ui/Home with parameter `playnum` set to a player number value, e.g. `1`,
-gives details similar to /Settings.
+gives details similar to [/Settings](#settings).
 
 Endpoint ui/reportServiceDuration with parameter `playnum` set to a player
 number value, e.g. `1`,
@@ -536,7 +555,7 @@ TODO: More details...
 
 Sets the sleep timer, each request will cycle through the supported settings:
 15, 30, 45, 60, 90 minutes, and off. Response is the new setting in number of
-minutes, or empty if it is off. Current value can be found from /Status.
+minutes, or empty if it is off. Current value can be found from [/Status](#status).
 
 ### /Alarms
 
