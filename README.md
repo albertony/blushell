@@ -1,8 +1,9 @@
 # BluShell
 
-Unofficial PowerShell wrapper of the BluOS Web/REST API, served by Bluesound
-multi-room music devices. The main objective for now is to have a test bench
-for exploring the features of the API, not an extremely robust and efficient interface.
+Unofficial documentation and PowerShell wrapper of the BluOS Web/REST API,
+served by Bluesound multi-room music devices. The main objective with the
+PowerShell wrapper is to have a test bench for exploring the features of the
+API, not an extremely robust and efficient interface.
 
 Bluesound is an award-winning wireless hi-res sound system (<https://www.bluesound.com>).
 
@@ -24,11 +25,21 @@ at the end.
 
 ## BluOS API
 
-The BluOS devices serve a REST API on port number 11000. Most operations can be performed
-with HTTP Get requests, some very few require HTTP Post. Responses are XML.
+The BluOS devices serve a REST API on port number 11000. Most operations can be
+performed with HTTP Get requests, some very few require HTTP Post. Responses are
+XML.
 
 On port 80 there is a basic web user interface, and some operations must be done
-with HTTP requests to this service instead of the REST service.
+with HTTP requests to this Web API instead of the REST API.
+
+The IP address of the devices can be found in the officiall app, under settings
+and Diagnostics.
+
+Basic PowerShell example:
+
+```powershell
+Invoke-RestMethod -Uri 192.168.0.123:11000/Status | Select-Object -ExpandProperty status
+```
 
 When describing the details below, all operations are HTTP Get requests against the
 REST API unless specifically stated otherwise.
@@ -211,6 +222,12 @@ BluOS supports grouping players in different modes:
 - Stereo pair
 - Home theater group
 
+A group has one primary player, also known as main, and one or many secondary
+players, also known as slaves. The primary player represents the group, and
+most requests needs to be directed to this, e.g. selecting the music source.
+But if such requests are sent to a secondary player instead, then they will
+automatically be proxied to the primary player.
+
 In the official app there are two main roads to creating a group:
 
 - Quick create multi-player group from the player drawer, either
@@ -225,13 +242,13 @@ and also give the group a custom name.
 
 ### /AddSlave
 
-A device can be added to a group by specifying the device address
-in parameter `slave`.  It seems to support alternative parameter
-`slaves` where multiple devices can be specified at once, probably
-comma-separated, but have not had a chance to test this.
+This request is sent to a device that should serve as the primary player
+in a group, and a secondary player (slave) must be specified with its
+device address in parameter `slave`, or a comma-separated list of secondary
+players in parameter `slaves`.
 
 Optional parameter `port` (or `ports`) can be specified if any
-of the devices use a non-standard port number (other than the
+of the slave devices use a non-standard port number (other than the
 default 11000).
 
 Optional parameter `group` can be specified to give the group a name,
@@ -243,7 +260,18 @@ one of them with value `left` and the other one with value `right`.
 (Multi-player group have implicit value `default` for both
 `channelMode` and `slaveChannelMode`).
 
-TODO: How to set up Home theater group?
+To set up Home theater group, specify parameters `channelMode` and
+`slaveChannelMode`, with values `front`, `side_left` or `side_right`.
+When grouping multiple secondary players with comma-separated `slaves`,
+you must specify a mode for each of them with a comma-separated value in
+`slaveChannelMode` as well. The primary player will typically be a
+CINEMA, SOUNDBAR or POWERNODE or SOUNDBAR device in front, set in channel
+mode `front`, and then a pair of FLEX devices in rear, set in slave channel
+modes `side_left` and `side_right`. (TODO: Not sure whan slave channel mode
+to use if you setup POWERNODE stereo setup as rear, maybe there is a `rear`
+mode then?). You can also configure the listening position using parameter
+`distance` for the primary, and `slaveDistance` for the secondary, which
+can also be a comma-separated list if more than one secondary.
 
 The [response](Samples/AddSlave.xml) contains the address and port numbers
 of slaves added.
@@ -440,8 +468,13 @@ name of the player - the "room name".
 
 ### /Status
 
-Gives the current status of the player. This is called frequently by the offical
-applications to keep it up to date with any changes from other controllers.
+Gives the current status of the player. This is called frequently by the
+official applications to keep it up to date with any changes from other
+controllers.
+
+When players are grouped, the primary player is the main player in the group.
+The secondary players are attached to the primary player. /Status response of
+the secondary players are copies of that of the primary player.
 
 Two optional parameters, `timeout`, which can be set to an integer value
 which defines number of seconds, and `etag`, which is an
@@ -633,11 +666,12 @@ Get request with parameter `play` set to integer 1 plays doorbell chimes.
 ### /reboot
 
 Rebooting the player device is possible via the Web API, not the REST API.
-Using the basic web interface, http://<device_address>/reboot will give you
-an interactive user interface with buttons Yes and No (parameter `noheader=1`
+Using the basic web interface, `http://<device_address>/reboot` will give you
+an interactive user interface with buttons Yes and No. Parameter `noheader=1`
 can be added for an even more minimalistic and stand-alone web interface,
-without the navigation menu on top). An HTTP Post request with parameter
-`yes` will trigger the actual reboot.
+without the navigation menu on top. Sending a HTTP Post request with
+parameter `yes` trigger the actual reboot, so you can use this from a
+non-interactive script etc.
 
 ### /diag
 
